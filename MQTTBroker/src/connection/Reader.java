@@ -17,7 +17,7 @@ import message.Message;
  *
  * @author hasalp
  */
-public class SubscribeRead extends Thread {
+public class Reader extends Thread {
 
     private InputStream inStream;
     private DataInputStream dinStream;
@@ -35,7 +35,7 @@ public class SubscribeRead extends Thread {
                 Thread.sleep(100);
             }
         }catch (IOException | InterruptedException ex) {
-            Logger.getLogger(SubscribeRead.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Reader.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     

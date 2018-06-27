@@ -8,6 +8,7 @@ package mqttlibrary;
 import java.io.UnsupportedEncodingException;
 import message.Encoder;
 import connection.Connection;
+import connection.Heart;
 import connection.Publish;
 import connection.Subscribe;
 
@@ -22,16 +23,21 @@ public class MQTTLibrary {
      */
     public static void main(String[] args) throws UnsupportedEncodingException {
         byte[] connack = Connection.connect("::1", "Hasan");
-        //Publish publisher = new Publish();
-        Subscribe subscriber = new Subscribe();
         if(connack[0] == 0x20 && connack[2] == 0x00) {
             Connection.connected = true;
+            //Publish publisher = new Publish();
             //publisher.setTopic("house/room1/temperature");
             //publisher.setMessage("22");
             //publisher.publish();
-            subscriber.setTopic("house/room1/temperature");
-            subscriber.setQos(0);
-            subscriber.subscribe();
+            //Subscribe subscriber = new Subscribe();
+            //subscriber.setTopic("house/room1/temperature");
+            //subscriber.setQos(0);
+            //subscriber.subscribe();
+            Heart heart = new Heart();
+            byte[] puback = heart.heart();
+            if(puback[0] == 0x40){
+                System.out.println("Heart Sent");
+            }
         }else{
             System.out.println("Connection Refused");
         }
