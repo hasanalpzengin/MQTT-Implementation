@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Smart Home</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="light">Light</string>
+
+    <string name="conn_on">Online</string>
+    <string name="conn_off">Offline</string>
+    <string name="active_light">Active Light :</string>
+    <string name="temperature">Temperature</string>
+
+    <string name="pressChange">Press Change Button to Apply</string>
+    <string name="closedConnection">Connection Closed</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="celcius">&#8451;</string>
+</resources>
