@@ -24,19 +24,19 @@ public class Connection {
     private static InputStream inStream;
     private static DataInputStream dinStream;
     public static ServerSocket serverSocket;
-    public static Socket socket;
     private static MessageBuilder builder;
     public static boolean connected = false;
     
-    public static void createServer(int port){
+    public ServerSocket createServer(int port){
         try {
             serverSocket = new ServerSocket(port);
-            socket = serverSocket.accept();
+            return serverSocket;
         } catch (UnknownHostException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Unavailable Host Ip");
         } catch (IOException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return null;
     }
 }

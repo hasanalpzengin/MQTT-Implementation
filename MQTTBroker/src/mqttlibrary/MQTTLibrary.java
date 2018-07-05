@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import message.Encoder;
 import connection.Connection;
 import connection.Reader;
+import java.net.ServerSocket;
 
 /**
  *
@@ -20,8 +21,10 @@ public class MQTTLibrary {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws UnsupportedEncodingException {
-        Connection.createServer(1883);
-        Reader reader = new Reader();
+        Connection connection = new Connection();
+        ServerSocket server = connection.createServer(1883);
+        
+        Reader reader = new Reader(server);
         reader.start();
     }
     

@@ -4,7 +4,7 @@ import time
 
 def on_connect(self, flags, userdata, rc):
     print("Connected with Result Code: "+str(rc))
-    client.subscribe("house/bulb/bulb1")
+    client.subscribe("house/room1/temperature")
 
 def on_message(self, userdata, msg):
     print(msg.topic+" "+str(msg.payload))

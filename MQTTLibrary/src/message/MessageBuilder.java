@@ -112,7 +112,7 @@ public class MessageBuilder {
     public final int CON_STR_LENGTH_POS = 13;
     public final int PUB_TOPIC_LENGTH_POS = 3;
     public final int SUB_TOPIC_LENGTH_POS = 5;
-    public final int SUB_IDENTIFIER_SIZE = 4; // for lsb and msb size
+    public final int SUB_IDENTIFIER_POS = 3;
     public final int SUB_TOPIC_IDENTIFIER_SIZE = 2;
     private static byte identifier = 1;
     
@@ -162,7 +162,7 @@ public class MessageBuilder {
         byte encodedQosLength = (byte) qos.length;
         
         mergedMessage[LENGTH_POS] += encodedTopicLength + encodedQosLength;
-        mergedMessage[PUB_TOPIC_LENGTH_POS] = identifier;
+        mergedMessage[SUB_IDENTIFIER_POS] = identifier;
         mergedMessage[SUB_TOPIC_LENGTH_POS] = encodedTopicLength;
         
         identifier++;

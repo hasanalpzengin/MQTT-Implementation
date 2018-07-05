@@ -5,8 +5,17 @@ public class Message {
     private int size;
     private int topic_size;
     private int message_size;
+    private int qos_level;
     private String message;
     private String topic;
+
+    public int getQos_level() {
+        return qos_level;
+    }
+
+    public void setQos_level(int qos_level) {
+        this.qos_level = qos_level;
+    }
 
     public String getTopic() {
         return topic;
