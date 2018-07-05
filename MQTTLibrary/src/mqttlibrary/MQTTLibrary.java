@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import message.Encoder;
 import connection.Connection;
 import connection.Heart;
+import connection.HeartRead;
 import connection.Publish;
 import connection.Subscribe;
 
@@ -33,6 +34,12 @@ public class MQTTLibrary {
             //subscriber.setTopic("house/room1/temperature");
             //subscriber.setQos(0);
             //subscriber.subscribe();
+            /*
+            *   start read and publish
+            *
+            */
+            HeartRead heartRead = new HeartRead();
+            heartRead.heartread();
             Heart heart = new Heart();
             byte[] puback = heart.heart();
             if(puback[0] == 0x40){

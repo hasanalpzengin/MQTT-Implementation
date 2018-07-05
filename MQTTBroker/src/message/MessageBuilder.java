@@ -106,4 +106,8 @@ public class MessageBuilder {
     public byte[] buildHeart(){
         return heartMessage;
     }
+
+    public byte[] buildPuback() {
+        return pubackMessage;
+    }
 }

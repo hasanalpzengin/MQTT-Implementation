@@ -23,7 +23,7 @@ import message.MessageBuilder;
  * @author hasalp
  */
 public class ReadThread extends Thread {
-    private Socket socket = null;
+    public Socket socket = null;
     private Reader reader = null;
     private int ID = -1;
     private InputStream inStream;
@@ -32,10 +32,12 @@ public class ReadThread extends Thread {
     private DataOutputStream doutStream;
     private static final int PUBLISH_TYPE = 3;
     private static final int CONNECT_TYPE = 1;
+    private static final int HEART_TYPE = 15;
     private static final int SUBSCRIBE_TYPE = 8;
+    private static final int PUBLISH_SIZE_POS = 1;
+    private String topic;
     
     public ReadThread(Socket socket){
-        this.reader = reader;
         this.socket = socket;
         ID = socket.getPort();
     }
@@ -56,8 +58,17 @@ public class ReadThread extends Thread {
                 Message message = Decoder.decode(data);
                 switch(message.getType()){
                     case PUBLISH_TYPE:{
-                        doutStream.write(data);
-                        System.out.println("Published");
+                        if(message.getQos_level()==0){
+                            topic = message.getVariable();
+                            int size = (int)data[PUBLISH_SIZE_POS];
+                            byte[] publish = new byte[size+2];
+                            System.arraycopy(data, 0, publish, 0, publish.length);
+                            //doutStream.write(new byte[]{0x01});
+                            for(ReadThread readThread : Reader.threads){
+                                readThread.doutStream.write(publish);
+                            }
+                            System.out.println("Published");
+                        }
                         break;
                     }
                     case CONNECT_TYPE:{
@@ -69,11 +80,27 @@ public class ReadThread extends Thread {
                     }
                     case SUBSCRIBE_TYPE:{
                         //send suback back
+                        topic = message.getVariable();
                         byte identifier = message.getFlags()[0];
                         byte qos = message.getQos_level();
                         byte suback[] = builder.buildSuback(qos, identifier);
                         doutStream.write(suback);
                         System.out.println("Subscribed");
+                        break;
+                    }
+                    case HEART_TYPE:{
+                        //send puback back and send heart to all subscribers
+                        //puback
+                        byte puback[] = builder.buildPuback();
+                        doutStream.write(puback);
+                        //heart
+                        for(ReadThread readThread : Reader.threads){
+                            readThread.doutStream.write(builder.buildHeart());
+                        }
+                        break;
+                    }
+                    default:{
+                        System.out.println("Unknown Command");
                         break;
                     }
                 }

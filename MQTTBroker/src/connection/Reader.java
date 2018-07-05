@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import message.Decoder;
@@ -26,10 +27,11 @@ import message.MessageBuilder;
 public class Reader extends Thread {
 
     private ServerSocket server = null;
-    private ReadThread client = null;
+    public static ArrayList<ReadThread> threads;
     
     public Reader(ServerSocket server){
         this.server = server;
+        threads = new ArrayList();
     }
     
     @Override
@@ -45,9 +47,10 @@ public class Reader extends Thread {
     }
 
     private void addThread(Socket accept) {
-        client = new ReadThread(accept);
-        client.open();
-        client.start();
+        ReadThread thread = new ReadThread(accept);
+        thread.open();
+        thread.start();
+        threads.add(thread);
     }
     
 }

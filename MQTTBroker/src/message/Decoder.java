@@ -20,6 +20,9 @@ public class Decoder {
             decodedMsg = connectDecode(input);
         }else if(input[0] == -0x8F+0x0F+0x02){
             decodedMsg = subscribeDecode(input);
+        }else{
+            decodedMsg = new Message();
+            decodedMsg.setType(-1);
         }
         return decodedMsg;
     }
@@ -72,7 +75,7 @@ public class Decoder {
         Message decodedMsg = new Message();
         decodedMsg.setType(15);
         int length = (int) input[SIZE_POS];
-        decodedMsg.setPayload("<3");
+        //decodedMsg.setPayload("<3");
         return decodedMsg;
     }
 
