@@ -21,11 +21,6 @@ public class MessageBuilder {
         0x02
     };
     
-    private final byte[] pubrelMessage = {
-        0x60,
-        0x02
-    };
-    
     private final byte[] pubcompMessage = {
         0x70,
         0x02
@@ -107,7 +102,15 @@ public class MessageBuilder {
         return heartMessage;
     }
 
-    public byte[] buildPuback() {
+    public byte[] buildPuback(){
         return pubackMessage;
+    }
+    
+    public byte[] buildPubrec(){
+        return pubrecMessage;
+    }
+    
+    public byte[] buildPubcomp(){
+        return pubcompMessage;
     }
 }

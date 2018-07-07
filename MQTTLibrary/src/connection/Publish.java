@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import message.Decoder;
 import message.MessageBuilder;
 
 /**
@@ -31,36 +32,63 @@ public class Publish extends Thread {
     private MessageBuilder builder;
     private byte[] publishMessage;
     private String message, topic;
+    private int second = 10;
+    private int qos = 0;
     
-    public byte[] publish(){
-        builder = new MessageBuilder();
-        try {
-            outStream = Connection.socket.getOutputStream();
-            doutStream = new DataOutputStream(outStream);
-            //connection message
-            this.start();
-            inStream = socket.getInputStream();
-            dinStream = new DataInputStream(inStream);
-            byte[] puback = new byte[2];
-            dinStream.read(puback);
-            return puback;
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Unavailable Host Ip");
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+    public void publish(){
+        if(!message.isEmpty() && !topic.isEmpty()){
+            builder = new MessageBuilder();
+            try {
+                outStream = Connection.socket.getOutputStream();
+                doutStream = new DataOutputStream(outStream);
+                //connection message
+                this.start();
+                inStream = socket.getInputStream();
+                dinStream = new DataInputStream(inStream);
+            } catch (UnknownHostException ex) {
+                Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("Unavailable Host Ip");
+            } catch (IOException ex) {
+                Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
-        return null;
     }
 
     @Override
     public void run() {
         while(true){
             try {
-                publishMessage = builder.buildPublish(message ,topic);
-                doutStream.write(publishMessage);
-                doutStream.flush();
-                Thread.sleep(1000);
+                if(qos==0){
+                    publishMessage = builder.buildPublish(message ,topic, qos);
+                    doutStream.write(publishMessage);
+                    doutStream.flush();
+                    System.out.println("Publish Success QoS0");
+                }else if(qos==1){
+                    publishMessage = builder.buildPublish(message ,topic, qos);
+                    doutStream.write(publishMessage);
+                    doutStream.flush();
+                    byte[] puback = new byte[2];
+                    dinStream.read(puback);
+                    if(Decoder.isPubAck(puback)){
+                        System.out.println("Publish Success QoS1");
+                    }
+                }else{
+                    publishMessage = builder.buildPublish(message ,topic, qos);
+                    doutStream.write(publishMessage);
+                    doutStream.flush();
+                    byte[] pubrec = new byte[2];
+                    dinStream.read(pubrec);
+                    if(Decoder.isPubrec(pubrec)){
+                        doutStream.write(builder.buildPubrel());
+                        doutStream.flush();
+                        byte[] pubcomp = new byte[2];
+                        dinStream.read(pubcomp);
+                        if(Decoder.isPubcomp(pubcomp)){
+                            System.out.println("Publish Success QoS2");
+                        }
+                    }
+                }
+                Thread.sleep(100*second);
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
                 return;
@@ -75,6 +103,14 @@ public class Publish extends Thread {
     public void setMessage(String message) {
         this.message = message;
     }
+    
+    public int getQos(){
+        return qos;
+    }
+    
+    public void setQos(int qos){
+        this.qos = qos;
+    }
 
     public String getTopic() {
         return topic;
@@ -83,6 +119,16 @@ public class Publish extends Thread {
     public void setTopic(String topic) {
         this.topic = topic;
     }
+
+    public int getSecond() {
+        return second;
+    }
+
+    public void setSecond(int second) {
+        this.second = second;
+    }
+    
+    
     
     
 }

@@ -25,7 +25,7 @@ import message.MessageBuilder;
 public class ReadThread extends Thread {
     public Socket socket = null;
     private Reader reader = null;
-    private int ID = -1;
+    public int ID;
     private InputStream inStream;
     private OutputStream outStream;
     private DataInputStream dinStream;
@@ -35,7 +35,10 @@ public class ReadThread extends Thread {
     private static final int HEART_TYPE = 15;
     private static final int SUBSCRIBE_TYPE = 8;
     private static final int PUBLISH_SIZE_POS = 1;
-    private String topic;
+    private static int tryCount = 0;
+    public String topic;
+    public int qos=0;
+    public boolean isSubscriber = true;
     
     public ReadThread(Socket socket){
         this.socket = socket;
@@ -54,21 +57,13 @@ public class ReadThread extends Thread {
                 byte[] data = new byte[1024];
                 dinStream.read(data);
                 
-                System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(data));
                 Message message = Decoder.decode(data);
                 switch(message.getType()){
                     case PUBLISH_TYPE:{
-                        if(message.getQos_level()==0){
-                            topic = message.getVariable();
-                            int size = (int)data[PUBLISH_SIZE_POS];
-                            byte[] publish = new byte[size+2];
-                            System.arraycopy(data, 0, publish, 0, publish.length);
-                            //doutStream.write(new byte[]{0x01});
-                            for(ReadThread readThread : Reader.threads){
-                                readThread.doutStream.write(publish);
-                            }
-                            System.out.println("Published");
-                        }
+                        qos = message.getQos_level();
+                        topic = message.getVariable();
+                        isSubscriber = false;
+                        publish(data);
                         break;
                     }
                     case CONNECT_TYPE:{
@@ -81,6 +76,8 @@ public class ReadThread extends Thread {
                     case SUBSCRIBE_TYPE:{
                         //send suback back
                         topic = message.getVariable();
+                        qos = message.getQos_level();
+                        isSubscriber = true;
                         byte identifier = message.getFlags()[0];
                         byte qos = message.getQos_level();
                         byte suback[] = builder.buildSuback(qos, identifier);
@@ -101,7 +98,8 @@ public class ReadThread extends Thread {
                     }
                     default:{
                         System.out.println("Unknown Command");
-                        break;
+                        close();
+                        return;
                     }
                 }
             }
@@ -122,8 +120,45 @@ public class ReadThread extends Thread {
         try {
             if(socket!=null) socket.close();
             if(dinStream != null) dinStream.close();
+            this.interrupt();
         } catch (IOException ex) {
             Logger.getLogger(ReadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void publish(byte[] data) throws IOException {
+        Message message = Decoder.decode(data);
+        topic = message.getVariable();
+        int size = message.getSize();
+        byte[] publish = new byte[size+2];
+        System.arraycopy(data, 0, publish, 0, publish.length);
+        for(ReadThread readThread : Reader.threads){
+            System.out.println("-------------");
+            System.out.println(readThread.topic+" : "+this.topic);
+            System.out.println(readThread.qos+" : "+this.qos);
+            System.out.println(readThread.isSubscriber);
+            if(readThread.isSubscriber && readThread.topic.equalsIgnoreCase(this.topic) && this.qos==readThread.qos){
+                System.out.println("Worked");
+                readThread.doutStream.write(publish);
+                readThread.doutStream.flush();
+            }
+        }
+        if(message.getQos_level()==0){
+            //doutStream.write(new byte[]{0x01});
+            System.out.println("Published");
+        }else if(message.getQos_level()==1){
+            MessageBuilder builder = new MessageBuilder();
+            doutStream.write(builder.buildPuback());
+            System.out.println("Published QOS1");
+        }else if(message.getQos_level()==2){
+            MessageBuilder builder = new MessageBuilder();
+            doutStream.write(builder.buildPubrec());//rec pub
+            byte[] pubrel = new byte[2];
+            dinStream.read(pubrel);//rel rec
+            if(Decoder.isPubrel(pubrel)){
+                doutStream.write(builder.buildPubcomp()); // comp pub
+            }
+            System.out.println("Published QOS2");
         }
     }
     

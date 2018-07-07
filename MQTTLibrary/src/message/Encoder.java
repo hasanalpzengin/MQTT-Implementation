@@ -7,7 +7,6 @@ import java.math.BigInteger;
 public class Encoder {
     
     private static String stringToHexString(String s) throws UnsupportedEncodingException{
-
         String in = String.format("%040x", new BigInteger(1, s.getBytes("UTF-8")));
         String[] bytes = in.split("(?<=\\G..)");
         StringBuilder sBuilder = new StringBuilder();

@@ -28,6 +28,7 @@ public class Reader extends Thread {
 
     private ServerSocket server = null;
     public static ArrayList<ReadThread> threads;
+    private int id = 0;
     
     public Reader(ServerSocket server){
         this.server = server;
@@ -48,6 +49,8 @@ public class Reader extends Thread {
 
     private void addThread(Socket accept) {
         ReadThread thread = new ReadThread(accept);
+        thread.ID = id;
+        id++;
         thread.open();
         thread.start();
         threads.add(thread);

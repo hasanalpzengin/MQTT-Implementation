@@ -6,9 +6,18 @@ public class Message {
     private int topic_size;
     private int message_size;
     private int qos_level;
+    private byte[] identifier;
     private String message;
     private String topic;
 
+    public byte[] getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(byte[] identifier) {
+        this.identifier = identifier;
+    }
+    
     public int getQos_level() {
         return qos_level;
     }

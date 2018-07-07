@@ -7,18 +7,21 @@ public class Decoder {
     private static final int SIZE_POS = 1;
     private static final int IDENTIFIER_SIZE = 2;
     private static final int PACKAGE_IDENTIFIER_POS = 3;
+    private static final int PUB_TYPEQOS_POS = 0;
     
     
     public static Message decode(byte[] input){
         Message decodedMsg = null;
-        
-        if(input[0] == 0x30){
+        int typeqos = (int)input[PUB_TYPEQOS_POS];
+        int type = (int) Math.floor(typeqos/16);
+        int qos = typeqos/2;
+        if(type == 3){
             decodedMsg = publishDecode(input);
-        }else if(input[0] == -0x10){
+        }else if(type == 15){
             decodedMsg = heartDecode(input);
-        }else if(input[0] == 0x10){
+        }else if(type == 1){
             decodedMsg = connectDecode(input);
-        }else if(input[0] == -0x8F+0x0F+0x02){
+        }else if(type == -7){
             decodedMsg = subscribeDecode(input);
         }else{
             decodedMsg = new Message();
@@ -52,6 +55,8 @@ public class Decoder {
     private static Message publishDecode(byte[] input){
         Message decodedMsg = new Message();
         decodedMsg.setType(3);
+        int qosLevel = input[PUB_TYPEQOS_POS];
+        decodedMsg.setQos_level((byte) ((qosLevel%16)/2));
         int length = (int)input[SIZE_POS]; // remaining length
         decodedMsg.setSize(length);
         int topicLength = (int)input[VARIABLE_SIZE_POS];
@@ -82,6 +87,7 @@ public class Decoder {
     private static Message subscribeDecode(byte[] input) {
         Message decodedMsg = new Message();
         decodedMsg.setType(8);
+        System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(input));
         int length = (int)input[SIZE_POS]; // remaining length
         decodedMsg.setSize(length);
         byte packageIdentifier = input[PACKAGE_IDENTIFIER_POS];
@@ -90,8 +96,9 @@ public class Decoder {
         decodedMsg.setFlags(new byte[]{packageIdentifier});
         StringBuilder sBuilder = new StringBuilder();
         //topic size loop
+        System.out.println("Size: "+topicLength);
         for(int i=0; i<topicLength; i++){
-            sBuilder.append((char)input[i+IDENTIFIER_SIZE*2]);
+            sBuilder.append((char)input[i+(IDENTIFIER_SIZE*3)]);
         }
         decodedMsg.setVariable(sBuilder.toString());
         sBuilder.setLength(0);
@@ -99,5 +106,12 @@ public class Decoder {
         byte qos = input[length+IDENTIFIER_SIZE-1];
         decodedMsg.setQos_level(qos);
         return decodedMsg;
+    }
+    
+    public static boolean isPubrel(byte[] data){
+        if(data[0] == 0x60){
+            return true;
+        }
+        return false;
     }
 }

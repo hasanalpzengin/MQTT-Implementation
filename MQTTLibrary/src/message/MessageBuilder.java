@@ -1,10 +1,11 @@
 package message;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Random;
 
 public class MessageBuilder {
     
-    public final byte[] connectMessage = {
+    private final byte[] connectMessage = {
         0x10, //Connect
         0x0C, //Remaining Length
         0x00, //Protocol Name MSB 0
@@ -22,14 +23,14 @@ public class MessageBuilder {
         //id
     };
     
-    public final byte[] connackMessage = {
+    private final byte[] connackMessage = {
         0x20,
         0x02
         //flag
         //connect return code
     };
     
-    public final byte[] publishMessage = {
+    private final byte[] publishMessage = {
         0x30, //Publish with QOS 0
         0x02, //Remaining length
         0x00, //MSB
@@ -38,27 +39,27 @@ public class MessageBuilder {
         //message
     };
     
-    public final byte[] pubackMessage = {
+    private final byte[] pubackMessage = {
         0x40,
         0x02
     };
     
-    public final byte[] pubrecMessage = {
+    private final byte[] pubrecMessage = {
         0x50,
         0x02
     };
     
-    public final byte[] pubrelMessage = {
+    private final byte[] pubrelMessage = {
         0x60,
         0x02
     };
     
-    public final byte[] pubcompMessage = {
+    private final byte[] pubcompMessage = {
         0x70,
         0x02
     };
     
-    public final byte[] subscribeMessage = {
+    private final byte[] subscribeMessage = {
         -0x8F+0x0F+0x02, //-82
         0x04, //length
         0x00, //Package Identifier MSB
@@ -69,7 +70,7 @@ public class MessageBuilder {
         //qos
     };
     
-    public final byte[] subackMessage = {
+    private final byte[] subackMessage = {
         -0x70,
         0x00, // length
         0x00, //MSB
@@ -78,7 +79,7 @@ public class MessageBuilder {
         //0 - qos0, 1 - qos1, 2 - qos2, 80 failure
     };
     
-    public final byte[] unsubMessage = {
+    private final byte[] unsubMessage = {
         -0x60,
         0x00, //remaining length
         0x00, //msb
@@ -86,24 +87,24 @@ public class MessageBuilder {
         //topic
     };
     
-    public final byte[] unsubackMessage = {
+    private final byte[] unsubackMessage = {
         -0x50,
         0x02
     };
     
-    public final byte[] pingreqMessage = {
+    private final byte[] pingreqMessage = {
         -0x40,
         0x00
     };
     
-    public final byte[] pingrespMessage = {
+    private final byte[] pingrespMessage = {
         -0x30,
         0x00
     };
     
-    public final byte[] disconnectMessage = {-0x20, 0x00};
+    private final byte[] disconnectMessage = {-0x20, 0x00};
     
-    public final byte[] heartMessage = {
+    private final byte[] heartMessage = {
         -0x10, //F
         0x00
     };
@@ -115,6 +116,7 @@ public class MessageBuilder {
     public final int SUB_IDENTIFIER_POS = 3;
     public final int SUB_TOPIC_IDENTIFIER_SIZE = 2;
     private static byte identifier = 1;
+    public final int PUB_QOS_POS = 0;
     
     public byte[] buildConnect(String sid) throws UnsupportedEncodingException{
         byte[] id = Encoder.encode(sid);
@@ -130,18 +132,35 @@ public class MessageBuilder {
         return mergedMessage;
     }
     
-    public byte[] buildPublish(String sMessage, String sTopic) throws UnsupportedEncodingException{
+    public byte[] buildPublish(String sMessage, String sTopic, int qos) throws UnsupportedEncodingException{
+        Random random = new Random();
         byte[] message = Encoder.encode(sMessage);
         byte[] topic = Encoder.encode(sTopic);
-        byte[] mergedMessage = new byte[message.length+publishMessage.length+topic.length];
-        System.arraycopy(publishMessage, 0, mergedMessage, 0, publishMessage.length);
-        System.arraycopy(topic, 0, mergedMessage, publishMessage.length, topic.length);
-        System.arraycopy(message, 0, mergedMessage, publishMessage.length+topic.length, message.length);
+        byte encodedMessageLength;
+        byte[] mergedMessage;
+        if(qos != 0){
+            //package identifier
+            byte[] packageIdentifier = new byte[2];
+            random.nextBytes(packageIdentifier);
+            //package build
+            mergedMessage = new byte[message.length+publishMessage.length+topic.length+packageIdentifier.length];
+            System.arraycopy(publishMessage, 0, mergedMessage, 0, publishMessage.length);
+            System.arraycopy(topic, 0, mergedMessage, publishMessage.length, topic.length);
+            System.arraycopy(packageIdentifier, 0, mergedMessage, publishMessage.length+topic.length, packageIdentifier.length);
+            System.arraycopy(message, 0, mergedMessage, publishMessage.length+topic.length+packageIdentifier.length, message.length);
+            encodedMessageLength = (byte) (message.length + packageIdentifier.length);
+        }else{
+            mergedMessage = new byte[message.length+publishMessage.length+topic.length];
+            System.arraycopy(publishMessage, 0, mergedMessage, 0, publishMessage.length);
+            System.arraycopy(topic, 0, mergedMessage, publishMessage.length, topic.length);
+            System.arraycopy(message, 0, mergedMessage, publishMessage.length+topic.length, message.length);
+            encodedMessageLength = (byte)message.length;
+        }
         
-        byte encodedMessageLength = (byte)message.length;
         byte encodedTopicLength = (byte)topic.length;
         //length set
         mergedMessage[LENGTH_POS] += encodedMessageLength + encodedTopicLength;
+        mergedMessage[PUB_QOS_POS] += (qos*2);
         mergedMessage[PUB_TOPIC_LENGTH_POS] = encodedTopicLength;
         return mergedMessage;
     }
@@ -173,6 +192,10 @@ public class MessageBuilder {
     
     public byte[] buildHeart(){
         return heartMessage;
+    }
+    
+    public byte[] buildPubrel(){
+        return pubrelMessage;
     }
     
 }

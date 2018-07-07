@@ -31,7 +31,9 @@ public class SubscribeRead extends Thread {
                 byte[] data = new byte[1024];
                 dinStream.read(data);
                 Message message = Decoder.decode(data);
+                if(message!=null){
                 System.out.println(message.getMessage());
+                }
                 Thread.sleep(100);
             }
         }catch (IOException | InterruptedException ex) {

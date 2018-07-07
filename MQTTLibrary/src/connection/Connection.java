@@ -26,9 +26,9 @@ public class Connection {
     private static DataInputStream dinStream;
     public static Socket socket;
     private static MessageBuilder builder;
-    public static boolean connected = false;
+    private static boolean connected = false;
     
-    public static byte[] connect(String ip, String id){
+    public static boolean connect(String ip, String id){
         builder = new MessageBuilder();
         try {
             addr = InetAddress.getByName(ip);
@@ -45,13 +45,19 @@ public class Connection {
             dinStream = new DataInputStream(inStream);
             byte[] respond = new byte[4];
             dinStream.read(respond);
-            return respond;
+            if(respond[0] == 0x20 && respond[2] == 0x00) {
+                Connection.connected = true;
+            }
         } catch (UnknownHostException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Unavailable Host Ip");
         } catch (IOException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return connected;
+    }
+    
+    public static boolean isConnected(){
+        return connected;
     }
 }
