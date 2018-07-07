@@ -18,6 +18,7 @@
 -- Publish | for all QoS Types
 -- Subscribe | for all QoS Types
 -- Heart
-
+- Mini Project
+SmartHome with MQTT | Android device control and python raspberry sensor.
 ## TODO
 [ ] Library's and Broker's Raspberry Live Test
