@@ -25,7 +25,7 @@ class MyMQTTClass(mqtt.Client):
         rc = 0
         while rc==0:
             rc=self.loop()
-            publisher = self.publish("house/room1/temperature", self.getTemperature())
+            publisher = self.publish("house/room1/temperature", self.getTemperature(), qos=1)
             publisher.wait_for_publish()
             time.sleep(10)
         return rc

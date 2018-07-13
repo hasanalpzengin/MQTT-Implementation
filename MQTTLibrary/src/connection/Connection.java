@@ -47,6 +47,7 @@ public class Connection {
             dinStream.read(respond);
             if(respond[0] == 0x20 && respond[2] == 0x00) {
                 Connection.connected = true;
+                System.out.println("Connection Success");
             }
         } catch (UnknownHostException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
@@ -54,6 +55,20 @@ public class Connection {
         } catch (IOException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //on exit
+        Runtime.getRuntime().addShutdownHook(new Thread(){
+            @Override
+            public void run(){
+                if(Connection.connected){
+                    try {
+                        doutStream.write(builder.buildDisconnect());
+                    } catch (IOException ex) {
+                        Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        });
+        
         return connected;
     }
     

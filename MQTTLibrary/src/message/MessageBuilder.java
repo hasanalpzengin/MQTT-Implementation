@@ -198,4 +198,8 @@ public class MessageBuilder {
         return pubrelMessage;
     }
     
+    public byte[] buildDisconnect(){
+        return disconnectMessage;
+    }
+    
 }

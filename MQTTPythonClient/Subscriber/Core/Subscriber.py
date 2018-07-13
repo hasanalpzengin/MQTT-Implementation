@@ -20,7 +20,7 @@ class MyMQTTClass(mqtt.Client):
 
     def run(self):
         self.connect("localhost", 1883, 60)
-        self.subscribe("house/room1/temperature", 0)
+        self.subscribe("house/room1/temperature", 1)
         rc = 0
         while rc==0:
             rc=self.loop()

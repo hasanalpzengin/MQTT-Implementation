@@ -8,7 +8,7 @@ import message.Decoder;
 public class JavaClient {
 
     public static void main(String[] args) {
-        Connection.connect("::1", "Hasan");
+        Connection.connect("localhost", "Hasan");
         if(Connection.isConnected()){
             //HeartRead reader = new HeartRead();
             //reader.heartread();

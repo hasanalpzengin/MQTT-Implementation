@@ -23,7 +23,7 @@ import message.MessageBuilder;
  *
  * @author hasalp
  */
-public class Publish extends Thread {
+public class AutoPublish extends Thread {
     
     private OutputStream outStream;
     private DataOutputStream doutStream;
@@ -31,12 +31,12 @@ public class Publish extends Thread {
     private DataInputStream dinStream;
     private MessageBuilder builder;
     private byte[] publishMessage;
-    private String message, topic;
+    private String message = null, topic = null;
     private int second = 10;
     private int qos = 0;
     
-    public void publish(){
-        if(!message.isEmpty() && !topic.isEmpty()){
+    public void autoPublish(){
+        if(topic!=null){
             builder = new MessageBuilder();
             try {
                 outStream = Connection.socket.getOutputStream();
@@ -56,40 +56,45 @@ public class Publish extends Thread {
 
     @Override
     public void run() {
-        try {
-            if(qos==0){
-                publishMessage = builder.buildPublish(message ,topic, qos);
-                doutStream.write(publishMessage);
-                doutStream.flush();
-                System.out.println("Publish Success QoS0");
-            }else if(qos==1){
-                publishMessage = builder.buildPublish(message ,topic, qos);
-                doutStream.write(publishMessage);
-                doutStream.flush();
-                byte[] puback = new byte[2];
-                dinStream.read(puback);
-                if(Decoder.isPubAck(puback)){
-                    System.out.println("Publish Success QoS1");
-                }
-            }else{
-                publishMessage = builder.buildPublish(message ,topic, qos);
-                doutStream.write(publishMessage);
-                doutStream.flush();
-                byte[] pubrec = new byte[2];
-                dinStream.read(pubrec);
-                if(Decoder.isPubrec(pubrec)){
-                    doutStream.write(builder.buildPubrel());
-                    doutStream.flush();
-                    byte[] pubcomp = new byte[2];
-                    dinStream.read(pubcomp);
-                    if(Decoder.isPubcomp(pubcomp)){
-                        System.out.println("Publish Success QoS2");
+        while(true){
+            try {
+                if(message!=null){
+                    if(qos==0){
+                        publishMessage = builder.buildPublish(message ,topic, qos);
+                        doutStream.write(publishMessage);
+                        doutStream.flush();
+                        System.out.println("Publish Success QoS0");
+                    }else if(qos==1){
+                        publishMessage = builder.buildPublish(message ,topic, qos);
+                        doutStream.write(publishMessage);
+                        doutStream.flush();
+                        byte[] puback = new byte[2];
+                        dinStream.read(puback);
+                        if(Decoder.isPubAck(puback)){
+                            System.out.println("Publish Success QoS1");
+                        }
+                    }else{
+                        publishMessage = builder.buildPublish(message ,topic, qos);
+                        doutStream.write(publishMessage);
+                        doutStream.flush();
+                        byte[] pubrec = new byte[2];
+                        dinStream.read(pubrec);
+                        if(Decoder.isPubrec(pubrec)){
+                            doutStream.write(builder.buildPubrel());
+                            doutStream.flush();
+                            byte[] pubcomp = new byte[2];
+                            dinStream.read(pubcomp);
+                            if(Decoder.isPubcomp(pubcomp)){
+                                System.out.println("Publish Success QoS2");
+                            }
+                        }
                     }
                 }
+                Thread.sleep(1000*second);
+            } catch (IOException | InterruptedException ex) {
+                Logger.getLogger(AutoPublish.class.getName()).log(Level.SEVERE, null, ex);
+                return;
             }
-        } catch (IOException ex) {
-            Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
-            return;
         }
     }
 
@@ -115,5 +120,17 @@ public class Publish extends Thread {
 
     public void setTopic(String topic) {
         this.topic = topic;
-    } 
+    }
+
+    public int getSecond() {
+        return second;
+    }
+
+    public void setSecond(int second) {
+        this.second = second;
+    }
+    
+    
+    
+    
 }

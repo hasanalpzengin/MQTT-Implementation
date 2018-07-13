@@ -33,6 +33,7 @@ public class ReadThread extends Thread {
     private static final int PUBLISH_TYPE = 3;
     private static final int CONNECT_TYPE = 1;
     private static final int HEART_TYPE = 15;
+    private static final int DISCONNECT_TYPE = 14;
     private static final int SUBSCRIBE_TYPE = 8;
     private static final int PUBLISH_SIZE_POS = 1;
     private static int tryCount = 0;
@@ -96,6 +97,9 @@ public class ReadThread extends Thread {
                         }
                         break;
                     }
+                    case DISCONNECT_TYPE:{
+                        close();
+                    }
                     default:{
                         System.out.println("Unknown Command");
                         close();
@@ -118,8 +122,12 @@ public class ReadThread extends Thread {
     
     public void close(){
         try {
+            Reader.threads.remove(ID);
             if(socket!=null) socket.close();
             if(dinStream != null) dinStream.close();
+            if(doutStream != null) doutStream.close();
+            if(inStream != null) inStream.close();
+            if(outStream != null) outStream.close();
             this.interrupt();
         } catch (IOException ex) {
             Logger.getLogger(ReadThread.class.getName()).log(Level.SEVERE, null, ex);
@@ -133,10 +141,12 @@ public class ReadThread extends Thread {
         byte[] publish = new byte[size+2];
         System.arraycopy(data, 0, publish, 0, publish.length);
         for(ReadThread readThread : Reader.threads){
+            /*
             System.out.println("-------------");
             System.out.println(readThread.topic+" : "+this.topic);
             System.out.println(readThread.qos+" : "+this.qos);
             System.out.println(readThread.isSubscriber);
+            */
             if(readThread.isSubscriber && readThread.topic.equalsIgnoreCase(this.topic) && this.qos==readThread.qos){
                 System.out.println("Worked");
                 readThread.doutStream.write(publish);

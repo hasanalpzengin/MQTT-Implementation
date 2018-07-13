@@ -58,7 +58,7 @@ public class Heart extends Thread {
             doutStream.flush();
             Thread.sleep(1000);
         } catch (IOException | InterruptedException ex) {
-            Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AutoPublish.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
     }
