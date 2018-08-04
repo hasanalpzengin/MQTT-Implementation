@@ -51,7 +51,6 @@ public class Reader extends Thread {
         ReadThread thread = new ReadThread(accept);
         thread.ID = id;
         id++;
-        thread.open();
         thread.start();
         threads.add(thread);
     }

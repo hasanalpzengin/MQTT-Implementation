@@ -93,8 +93,8 @@ public class MessageBuilder {
         
         mergedMessage[SUBACK_IDENTIFIER_POS] = identifier;
         mergedMessage[SUBACK_QOS_POS] = qosLevel;
-        
-        System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(mergedMessage));
+        //byte print
+        //System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(mergedMessage));
         return mergedMessage;
     }
     

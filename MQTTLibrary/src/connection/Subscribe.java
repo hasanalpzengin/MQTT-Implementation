@@ -57,7 +57,7 @@ public class Subscribe extends Thread {
             SubscribeRead read = new SubscribeRead();
             read.start();
         } catch (IOException ex) {
-            Logger.getLogger(AutoPublish.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     

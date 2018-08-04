@@ -185,8 +185,8 @@ public class MessageBuilder {
         mergedMessage[SUB_TOPIC_LENGTH_POS] = encodedTopicLength;
         
         identifier++;
-        
-        System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(mergedMessage));
+        //print byte output
+        //System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(mergedMessage));
         return mergedMessage;
     }
     

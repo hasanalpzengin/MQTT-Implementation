@@ -1,8 +1,12 @@
 package com.example.hasalp.smarthome;
 
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -17,6 +21,9 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.util.ArrayList;
+import java.util.Locale;
+
+import static android.app.Activity.RESULT_OK;
 
 
 /**
@@ -26,11 +33,13 @@ public class LightFragment extends Fragment {
     private LinearLayoutManager layoutManager;
     private RecyclerView recyclerView;
     private ImageButton lightButton;
+    private FloatingActionButton voiceButton;
     private RecyclerAdapter recyclerAdapter;
     private static int currentItem = -1;
     public static final String TOPIC = "house/light/#";
     public static final int QOS = 0;
     public ArrayList<LightAgent> lightAgents = new ArrayList<>();
+    private static final int SPEECH_CODE = 100;
 
     private void updateImage(){
         if (currentItem!=-1) {
@@ -155,8 +164,46 @@ public class LightFragment extends Fragment {
                 changeStatus();
             }
         });
+        voiceButton = view.findViewById(R.id.voiceButton);
+
+        voiceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                voiceCommand();
+            }
+        });
 
         return view;
+    }
+
+    private void voiceCommand() {
+        Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say 'Light ON' or 'Light OFF'");
+        try{
+            startActivityForResult(voiceIntent, SPEECH_CODE);
+        }catch(ActivityNotFoundException e){
+            Log.e("Speech Activity Error", e.getMessage());
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case SPEECH_CODE:{
+                if(resultCode == RESULT_OK && null != data){
+                    ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    if (result.get(0).equalsIgnoreCase("Light on")){
+                        publish(currentItem, true);
+                    }else if(result.get(0).equalsIgnoreCase("Light off")){
+                        publish(currentItem, false);
+                    }
+                }
+            }
+        }
     }
 
     private class RecyclerAdapter extends RecyclerView.Adapter<LightRecyclerViewHolder>{

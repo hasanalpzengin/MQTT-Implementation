@@ -14,40 +14,34 @@ import java.io.OutputStream;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import message.Decoder;
 import message.MessageBuilder;
 
 /**
  *
  * @author hasalp
  */
-public class Heart extends Thread {
+public class Heart extends Function implements Runnable {
     
-    private OutputStream outStream;
-    private DataOutputStream doutStream;
-    private InputStream inStream;
-    private DataInputStream dinStream;
-    private MessageBuilder builder;
     private byte[] heartMessage;
     
-    public byte[] heart(){
+    public Heart(){
+        super();
         builder = new MessageBuilder();
         try {
-            outStream = Connection.socket.getOutputStream();
-            doutStream = new DataOutputStream(outStream);
-            //connection message
-            this.start();
-            inStream = socket.getInputStream();
-            dinStream = new DataInputStream(inStream);
             byte[] puback = new byte[2];
             dinStream.read(puback);
-            return puback;
+            if(Decoder.isPubAck(puback)){
+                System.out.println("Sending Success");
+            }else{
+                System.out.println("Sending Failed");
+            }
         } catch (UnknownHostException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Unavailable Host Ip");
         } catch (IOException ex) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
     }
 
     @Override
@@ -58,7 +52,7 @@ public class Heart extends Thread {
             doutStream.flush();
             Thread.sleep(1000);
         } catch (IOException | InterruptedException ex) {
-            Logger.getLogger(AutoPublish.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
     }

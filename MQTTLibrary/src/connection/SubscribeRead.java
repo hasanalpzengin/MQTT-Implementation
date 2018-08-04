@@ -17,22 +17,24 @@ import message.Message;
  *
  * @author hasalp
  */
-public class SubscribeRead extends Thread {
+public class SubscribeRead extends Function implements Runnable {
 
-    private InputStream inStream;
-    private DataInputStream dinStream;
+    public SubscribeRead() {
+        super();
+    }
     
     @Override
     public void run() {
         try{
-            inStream = Connection.socket.getInputStream();
-            dinStream = new DataInputStream(inStream);
+
             while(true){
                 byte[] data = new byte[1024];
                 dinStream.read(data);
                 Message message = Decoder.decode(data);
                 if(message!=null){
-                System.out.println(message.getMessage());
+                    if(message.getMessage()!= null){
+                        System.out.println(message.getMessage());
+                    }
                 }
                 Thread.sleep(100);
             }

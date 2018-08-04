@@ -20,26 +20,13 @@ import message.MessageBuilder;
  *
  * @author hasalp
  */
-public class HeartRead extends Thread {
+public class HeartRead extends Function implements Runnable {
     
-    private InputStream inStream;
-    private DataInputStream dinStream;
-    private MessageBuilder builder;
     private byte[] heartMessage;
-    
-    public void heartread(){
-        builder = new MessageBuilder();
-        try {
-            //connection message
-            this.start();
-            inStream = socket.getInputStream();
-            dinStream = new DataInputStream(inStream);
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Unavailable Host Ip");
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+    public HeartRead() {
+        //init IOStreams
+        super();
     }
 
     @Override
@@ -55,10 +42,9 @@ public class HeartRead extends Thread {
                 Thread.sleep(1000);
             }
         } catch (IOException | InterruptedException ex) {
-            Logger.getLogger(AutoPublish.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
     }
-    
-    
+
 }

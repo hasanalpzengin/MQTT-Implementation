@@ -87,7 +87,8 @@ public class Decoder {
     private static Message subscribeDecode(byte[] input) {
         Message decodedMsg = new Message();
         decodedMsg.setType(8);
-        System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(input));
+        //print byte
+        //System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(input));
         int length = (int)input[SIZE_POS]; // remaining length
         decodedMsg.setSize(length);
         byte packageIdentifier = input[PACKAGE_IDENTIFIER_POS];

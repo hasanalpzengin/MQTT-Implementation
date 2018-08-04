@@ -49,6 +49,7 @@ public class ReadThread extends Thread {
     @Override
     public void run() {
         try{
+            dinStream = new DataInputStream(socket.getInputStream());
             outStream = socket.getOutputStream();
             doutStream = new DataOutputStream(outStream);
             inStream = socket.getInputStream();
@@ -112,23 +113,16 @@ public class ReadThread extends Thread {
         }
     }
     
-    public void open(){
-        try {
-            dinStream = new DataInputStream(socket.getInputStream());
-        } catch (IOException ex) {
-            Logger.getLogger(ReadThread.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
     public void close(){
         try {
-            Reader.threads.remove(ID);
+            Reader.threads.remove(this);
             if(socket!=null) socket.close();
             if(dinStream != null) dinStream.close();
             if(doutStream != null) doutStream.close();
             if(inStream != null) inStream.close();
             if(outStream != null) outStream.close();
             this.interrupt();
+            System.out.println(ID+" has disconnect from server");
         } catch (IOException ex) {
             Logger.getLogger(ReadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -153,6 +147,7 @@ public class ReadThread extends Thread {
                 readThread.doutStream.flush();
             }
         }
+        System.out.println(message.getQos_level());
         if(message.getQos_level()==0){
             //doutStream.write(new byte[]{0x01});
             System.out.println("Published");

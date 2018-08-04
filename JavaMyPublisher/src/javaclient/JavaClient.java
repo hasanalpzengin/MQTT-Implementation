@@ -1,5 +1,6 @@
 package javaclient;
 
+import connection.Publish;
 import connection.Connection;
 import connection.Publish;
 import java.util.logging.Level;
@@ -8,7 +9,7 @@ import java.util.logging.Logger;
 public class JavaClient {
 
     public static void main(String[] args) {
-        Connection.connect("192.168.1.2", "Hasan");
+        Connection.connect("localhost", "Hasan");
         if(Connection.isConnected()){
             //Heart heartPublisher = new Heart();
             //byte puback[] = heartPublisher.heart();
@@ -17,16 +18,10 @@ public class JavaClient {
             //}
             Publish publish = new Publish();
             publish.setTopic("test");
-            publish.setQos(2);
-            while(true){
-                try {
-                    
-                    publish.publish();
-                    Thread.sleep(10000);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(JavaClient.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+            publish.setMessage("Hello");
+            publish.setQos(1);
+            publish.setSecond(2);
+            publish.autoPublish();
         }
     }
     
