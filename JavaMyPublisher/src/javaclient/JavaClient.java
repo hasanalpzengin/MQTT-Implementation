@@ -1,27 +1,29 @@
 package javaclient;
 
+import mqtt.MQTTClient;
 import connection.Publish;
 import connection.Connection;
-import connection.Publish;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import message.Message;
+
 
 public class JavaClient {
 
     public static void main(String[] args) {
-        Connection.connect("localhost", "Hasan");
-        if(Connection.isConnected()){
+        MQTTClient client = new MQTTClient();
+        Connection connection = client.connection("localhost", "Hasan");
+        if(connection.isConnected()){
             //Heart heartPublisher = new Heart();
             //byte puback[] = heartPublisher.heart();
             //if(Decoder.isPubAck(puback)){
                 //System.out.println("Heart Sent");
             //}
-            Publish publish = new Publish();
-            publish.setTopic("test");
-            publish.setMessage("Hello");
-            publish.setQos(1);
-            publish.setSecond(2);
-            publish.autoPublish();
+            Message message = new Message();
+            message.setMessage("1");
+            message.setTopic("light");
+            message.setQos_level(0);
+            client.publish(connection, message, true, 4);
         }
     }
     

@@ -5,59 +5,65 @@
  */
 package connection;
 
-import static connection.Connection.socket;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.UnknownHostException;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import message.MessageBuilder;
+import message.Decoder;
+import message.Message;
 
 /**
  *
  * @author hasalp
  */
-public class Subscribe extends Thread {
-    
-    private OutputStream outStream;
-    private DataOutputStream doutStream;
-    private InputStream inStream;
-    private DataInputStream dinStream;
-    private MessageBuilder builder;
+public abstract class Subscribe extends Function implements Runnable {
+
     private byte[] subscribeMessage;
     private String topic;
     private int qos;
     
-    public void subscribe(){
-        builder = new MessageBuilder();
+    public Subscribe(Connection connection ,String topic, int qos) {
+        super(connection.socket);
+        //subscribe request
         try {
-            outStream = Connection.socket.getOutputStream();
-            doutStream = new DataOutputStream(outStream);
-            inStream = socket.getInputStream();
-            dinStream = new DataInputStream(inStream);
-            //connection message
-            this.start();
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Unavailable Host Ip");
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+            this.qos = qos;
+            this.topic = topic;
+            subscribeMessage = builder.buildSubscribe(qos ,topic);
+            (new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    try {
+                        doutStream.write(subscribeMessage);
+                        doutStream.flush();
+                    } catch (IOException ex) {
+                        Logger.getLogger(Subscribe.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            })).start();
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(Subscribe.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
 
+    }
+    
     @Override
     public void run() {
-        try {
-            subscribeMessage = builder.buildSubscribe(qos ,topic);
-            doutStream.write(subscribeMessage);
-            doutStream.flush();
-            SubscribeRead read = new SubscribeRead();
-            read.start();
-        } catch (IOException ex) {
-            Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
+        try{
+            while(true){
+                byte[] data = new byte[1024];
+                dinStream.read(data);
+                Message message = Decoder.decode(data);
+                if(message!=null){
+                    if(message.getMessage()!= null){
+                        readHandle(message);
+                    }
+                }
+                Thread.sleep(100);
+            }
+        }catch (IOException | InterruptedException ex) {
+            Logger.getLogger(Subscribe.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -77,5 +83,6 @@ public class Subscribe extends Thread {
         this.qos = qos;
     }
     
+    public abstract void readHandle(Message message);
     
 }

@@ -5,7 +5,6 @@
  */
 package connection;
 
-import static connection.Connection.socket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -25,8 +24,8 @@ public class Heart extends Function implements Runnable {
     
     private byte[] heartMessage;
     
-    public Heart(){
-        super();
+    public Heart(Connection connection){
+        super(connection.socket);
         builder = new MessageBuilder();
         try {
             byte[] puback = new byte[2];

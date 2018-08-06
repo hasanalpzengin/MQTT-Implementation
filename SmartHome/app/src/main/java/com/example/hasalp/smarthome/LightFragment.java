@@ -16,12 +16,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-
 import java.util.ArrayList;
 import java.util.Locale;
+
+import connection.Connection;
+import connection.Publish;
+import connection.Subscribe;
+import message.Message;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -40,6 +41,7 @@ public class LightFragment extends Fragment {
     public static final int QOS = 0;
     public ArrayList<LightAgent> lightAgents = new ArrayList<>();
     private static final int SPEECH_CODE = 100;
+
 
     private void updateImage(){
         if (currentItem!=-1) {
@@ -69,18 +71,14 @@ public class LightFragment extends Fragment {
     private void publish(int pos, boolean value){
         LightAgent lightAgent = lightAgents.get(pos);
         String newValue = value ? "1" : "0";
-        byte[] payload = newValue.getBytes();
-        MqttMessage newMessage = new MqttMessage();
-        newMessage.setPayload(payload);
-        newMessage.setQos(0);
-        newMessage.setRetained(false);
+        Publish publish = new Publish();
+        publish.setMessage(newValue);
+        publish.setQos(1);
+        publish.setRepeat(false);
+        publish.setTopic(TOPIC);
+        (new Thread(publish)).start();
         lightAgent.setStatus(value);
         lightAgents.set(pos, lightAgent);
-        try {
-            Client.getClient().publish(lightAgent.getTopic()+"/change", newMessage);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
     }
 
     private int getIndex(String topic){
@@ -94,43 +92,39 @@ public class LightFragment extends Fragment {
     }
 
     public void startSubscribe(){
-        try {
-            Client.getClient().subscribe(TOPIC, QOS, new IMqttMessageListener() {
-                @Override
-                public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    Integer value = Integer.parseInt(new String(message.getPayload(), "UTF-8"));
-                    boolean status = (value != 0);
-                    Log.d("Message Arrived", String.valueOf(value));
-                    //if not null
-                    if (!topic.contains("change")) {
-                        int index = getIndex(topic);
-                        if (index == -1) {
-                            LightAgent lightAgent = new LightAgent();
-                            lightAgent.setTopic(topic);
-                            lightAgent.setStatus(status);
-                            lightAgent.setType("Light");
-                            lightAgents.add(lightAgent);
-                            //if this is first item set current
-                            setCurrent(0);
-                            if (lightButton!=null) {
-                                updateImage();
-                                recyclerAdapter.notifyItemInserted(currentItem);
-                            }
-                        } else {
-                            lightAgents.get(index).setStatus(status);
-                            if (lightButton!=null) {
-                                updateImage();
-                                recyclerAdapter.notifyItemChanged(index);
-                            }
+        Subscribe subscribe = new Subscribe(TOPIC, 1) {
+            @Override
+            public void readHandle(Message message) {
+                Integer value = Integer.parseInt(message.getMessage());
+                boolean status = (value != 0);
+                String topic = message.getTopic();
+                Log.d("Message Arrived", String.valueOf(value));
+                //if not null
+                if (!topic.contains("change")) {
+                    int index = getIndex(topic);
+                    if (index == -1) {
+                        LightAgent lightAgent = new LightAgent();
+                        lightAgent.setTopic(topic);
+                        lightAgent.setStatus(status);
+                        lightAgent.setType("Light");
+                        lightAgents.add(lightAgent);
+                        //if this is first item set current
+                        setCurrent(0);
+                        if (lightButton!=null) {
+                            updateImage();
+                            recyclerAdapter.notifyDataSetChanged();
+                        }
+                    } else {
+                        lightAgents.get(index).setStatus(status);
+                        if (lightButton!=null) {
+                            updateImage();
+                            recyclerAdapter.notifyDataSetChanged();
                         }
                     }
-
                 }
-            });
-        } catch (MqttException e) {
-            e.printStackTrace();
-            Log.d("Subscribe Thread","Failed");
-        }
+            }
+        };
+        (new Thread(subscribe)).start();
     }
 
     public static void setCurrent(int newPos){
@@ -198,8 +192,10 @@ public class LightFragment extends Fragment {
                     ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     if (result.get(0).equalsIgnoreCase("Light on")){
                         publish(currentItem, true);
+                        Log.d("Light Value", String.valueOf(1));
                     }else if(result.get(0).equalsIgnoreCase("Light off")){
                         publish(currentItem, false);
+                        Log.d("Light Value", String.valueOf(0));
                     }
                 }
             }

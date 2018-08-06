@@ -5,7 +5,6 @@
  */
 package connection;
 
-import static connection.Connection.socket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -24,9 +23,9 @@ public class HeartRead extends Function implements Runnable {
     
     private byte[] heartMessage;
 
-    public HeartRead() {
+    public HeartRead(Connection connection) {
         //init IOStreams
-        super();
+        super(connection.socket);
     }
 
     @Override

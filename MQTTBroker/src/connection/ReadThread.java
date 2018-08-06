@@ -131,6 +131,8 @@ public class ReadThread extends Thread {
     private void publish(byte[] data) throws IOException {
         Message message = Decoder.decode(data);
         topic = message.getVariable();
+        System.out.println("Topic: " + topic);
+        System.out.println("Message: " + message.getPayload());
         int size = message.getSize();
         byte[] publish = new byte[size+2];
         System.arraycopy(data, 0, publish, 0, publish.length);

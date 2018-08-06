@@ -9,6 +9,15 @@ public class Message {
     private String payload;
     private String variable;
     private byte[] flags;
+    private byte[] identifier;
+    
+    public byte[] getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(byte[] identifier) {
+        this.identifier = identifier;
+    }
 
     public byte[] getFlags() {
         return flags;

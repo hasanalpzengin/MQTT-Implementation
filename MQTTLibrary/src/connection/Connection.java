@@ -17,25 +17,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import message.MessageBuilder;
 
-public class Connection extends Function{
+public class Connection{
     private static InetAddress addr;
     public static final int PORT = 1883;
-    public static Socket socket;
+    public Socket socket;
     private static MessageBuilder builder;
     private static boolean connected = false;
+    private Function function;
     
     public Connection(String ip, String id){
         try {
             addr = InetAddress.getByName(ip);
             socket = new Socket(addr, PORT);
             socket.setKeepAlive(true);
-            initIO();
             //connection message
-            byte[] connectMessage = builder.buildConnect(id);
-            doutStream.write(connectMessage);
-            doutStream.flush();
+            function = new Function(socket);
+            byte[] connectMessage = function.builder.buildConnect(id);
+            function.doutStream.write(connectMessage);
+            function.doutStream.flush();
             byte[] respond = new byte[4];
-            dinStream.read(respond);
+            function.dinStream.read(respond);
             if(respond[0] == 0x20 && respond[2] == 0x00) {
                 Connection.connected = true;
                 System.out.println("Connection Success");
@@ -52,7 +53,7 @@ public class Connection extends Function{
             public void run(){
                 if(Connection.connected){
                     try {
-                        doutStream.write(builder.buildDisconnect());
+                        function.doutStream.write(builder.buildDisconnect());
                     } catch (IOException ex) {
                         Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -61,7 +62,7 @@ public class Connection extends Function{
         });
     }
     
-    public static boolean isConnected(){
+    public boolean isConnected(){
         return connected;
     }
 }

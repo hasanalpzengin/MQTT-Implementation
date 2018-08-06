@@ -16,10 +16,6 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-
 import java.util.ArrayList;
 
 
@@ -72,17 +68,17 @@ public class TemperatureFragment extends Fragment {
         TemperatureAgent temperatureAgent = temperatureAgents.get(pos);
         String newValue = String.valueOf(value);
         byte[] payload = newValue.getBytes();
-        MqttMessage newMessage = new MqttMessage();
-        newMessage.setPayload(payload);
-        newMessage.setQos(0);
-        newMessage.setRetained(false);
+        //MqttMessage newMessage = new MqttMessage();
+        //newMessage.setPayload(payload);
+        //newMessage.setQos(0);
+        //newMessage.setRetained(false);
         temperatureAgent.setStatus(value);
         temperatureAgents.set(pos, temperatureAgent);
-        try {
-            Client.getClient().publish(temperatureAgent.getTopic()+"/change", newMessage);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
+        //try {
+            //Client.getClient().publish(temperatureAgent.getTopic()+"/change", newMessage);
+        //} catch (MqttException e) {
+            //e.printStackTrace();
+        //}
     }
 
     private int getIndex(String topic){
@@ -96,42 +92,44 @@ public class TemperatureFragment extends Fragment {
     }
 
     public void startSubscribe(){
-        try {
-            Client.getClient().subscribe(TOPIC, QOS, new IMqttMessageListener() {
-                @Override
-                public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    Integer status = Integer.parseInt(new String(message.getPayload(), "UTF-8"));
-                    //if not null
-                    if (!topic.contains("change")) {
-                        Log.d("Value Fetched", String.valueOf(status));
-                        int index = getIndex(topic);
-                        if (index == -1) {
-                            TemperatureAgent temperatureAgent = new TemperatureAgent();
-                            temperatureAgent.setTopic(topic);
-                            temperatureAgent.setStatus(status);
-                            temperatureAgent.setType("Temperature");
-                            temperatureAgents.add(temperatureAgent);
-                            //if this is first item set current
-                            setCurrent(0);
-                            Log.d("Update","Success");
-                            if (recyclerAdapter != null) {
-                                recyclerAdapter.notifyItemInserted(currentItem);
-                                updateValue();
-                            }
-                        } else {
-                            temperatureAgents.get(index).setStatus(status);
-                            if (recyclerAdapter != null) {
-                                recyclerAdapter.notifyItemChanged(index);
+        /**
+            try {
+                Client.getClient().subscribe(TOPIC, QOS, new IMqttMessageListener() {
+                    @Override
+                    public void messageArrived(String topic, MqttMessage message) throws Exception {
+                        Integer status = Integer.parseInt(new String(message.getPayload(), "UTF-8"));
+                        //if not null
+                        if (!topic.contains("change")) {
+                            Log.d("Value Fetched", String.valueOf(status));
+                            int index = getIndex(topic);
+                            if (index == -1) {
+                                TemperatureAgent temperatureAgent = new TemperatureAgent();
+                                temperatureAgent.setTopic(topic);
+                                temperatureAgent.setStatus(status);
+                                temperatureAgent.setType("Temperature");
+                                temperatureAgents.add(temperatureAgent);
+                                //if this is first item set current
+                                setCurrent(0);
+                                Log.d("Update","Success");
+                                if (recyclerAdapter != null) {
+                                    recyclerAdapter.notifyItemInserted(currentItem);
+                                    updateValue();
+                                }
+                            } else {
+                                temperatureAgents.get(index).setStatus(status);
+                                if (recyclerAdapter != null) {
+                                    recyclerAdapter.notifyItemChanged(index);
+                                }
                             }
                         }
-                    }
 
-                }
-            });
-        } catch (MqttException e) {
-            e.printStackTrace();
-            Log.d("Subscribe Thread","Failed");
-        }
+                    }
+                });
+            } catch (MqttException e) {
+                e.printStackTrace();
+                Log.d("Subscribe Thread","Failed");
+            }
+         */
     }
 
     public static void setCurrent(int newPos){

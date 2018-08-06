@@ -6,13 +6,13 @@
 package connection;
 
 import static connection.Connection.PORT;
-import static connection.Connection.socket;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,8 +31,8 @@ public class Publish extends Function implements Runnable {
     private int qos = 0;
     private boolean repeat = true;
 
-    public Publish() {
-        super();
+    public Publish(Connection connection) {
+        super(connection.socket);
     }
 
     @Override

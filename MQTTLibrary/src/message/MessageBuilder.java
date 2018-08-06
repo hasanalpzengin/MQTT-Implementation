@@ -170,7 +170,6 @@ public class MessageBuilder {
         byte bqos = (byte) qosLevel;
         byte[] qos = new byte[1];
         qos[0] = bqos;
-        System.out.println(bqos);
         byte[] mergedMessage = new byte[subscribeMessage.length+topic.length+qos.length];
         
         System.arraycopy(subscribeMessage, 0, mergedMessage, 0, subscribeMessage.length);
@@ -186,7 +185,12 @@ public class MessageBuilder {
         
         identifier++;
         //print byte output
-        //System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(mergedMessage));
+        //System.out.print(javax.xml.bind.DatatypeConverter.printHexBinary(topic));
+        System.out.println("");
+        for(int i=0; i<topic.length; i++){
+            System.out.print((char)topic[i]);
+        }
+        
         return mergedMessage;
     }
     

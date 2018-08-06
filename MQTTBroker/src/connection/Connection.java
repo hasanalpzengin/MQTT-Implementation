@@ -21,10 +21,7 @@ import message.MessageBuilder;
 public class Connection {
     private static InetAddress addr;
     public static final int PORT = 1883;
-    private static InputStream inStream;
-    private static DataInputStream dinStream;
     public static ServerSocket serverSocket;
-    private static MessageBuilder builder;
     public static boolean connected = false;
     
     public ServerSocket createServer(int port){

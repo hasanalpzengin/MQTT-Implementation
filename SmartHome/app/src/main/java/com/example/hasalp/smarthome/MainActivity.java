@@ -1,8 +1,7 @@
 package com.example.hasalp.smarthome;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.os.StrictMode;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -18,28 +17,28 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttException;
-
 import java.util.ArrayList;
+
+import connection.Connection;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    IMqttToken token;
     NavigationView navBar;
     LightFragment lightFragment;
     TemperatureFragment temperatureFragment;
-    public static final String IP = "tcp://10.0.3.2:1883";
+    public static final String IP = "tcp://10.42.0.1:1883";
     ArrayList<Fragment> fragments;
     FragmentTransaction fragmentTransaction;
-    boolean connected = false;
+    private boolean connected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        //StrictMode.setThreadPolicy(policy);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -67,37 +66,29 @@ public class MainActivity extends AppCompatActivity
         fragments.add(temperatureFragment);
 
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frameLayout, fragments.get(1));
+        fragmentTransaction.replace(R.id.frameLayout, fragments.get(0));
         fragmentTransaction.commit();
     }
 
     public void setupConnection(){
-        Client.startClient(IP, getApplicationContext());
 
-        token = Client.connect();
+        (new MqttTask(IP,"Hasan")).execute();
 
         View header = navBar.getHeaderView(0);
         TextView id = header.findViewById(R.id.idText);
         final TextView status = header.findViewById(R.id.statusText);
 
-        id.setText(id.getText()+" - "+Client.getClientId());
+        if(Connection.isConnected()){
+            connected = true;
+            id.setText("Hasan");
+            status.setText("Connected");
+        }else{
+            Log.d("Error","Connection Error");
+            connected = false;
+            id.setText("Hasan");
+            status.setText("Disconnected");
+        }
 
-        token.setActionCallback(new IMqttActionListener() {
-            @Override
-            public void onSuccess(IMqttToken asyncActionToken) {
-                status.setText(getString(R.string.conn_on));
-                connected = true;
-                lightFragment.startSubscribe();
-                temperatureFragment.startSubscribe();
-            }
-
-            @Override
-            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                Log.e("Error","MQTT Connection", exception);
-                status.setText(getString(R.string.conn_off));
-                connected = false;
-            }
-        });
     }
 
     @Override

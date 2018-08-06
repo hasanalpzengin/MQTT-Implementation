@@ -53,24 +53,47 @@ public class Decoder {
     }
     
     private static Message publishDecode(byte[] input){
+        int counter = 0;
         Message decodedMsg = new Message();
         decodedMsg.setType(3);
-        int qosLevel = input[PUB_TYPEQOS_POS];
+        //first byte type+qos
+        int qosLevel = input[counter];
         decodedMsg.setQos_level((byte) ((qosLevel%16)/2));
-        int length = (int)input[SIZE_POS]; // remaining length
+        //first byte parsed
+        counter++;
+        int length = (int)input[counter]; // remaining length
         decodedMsg.setSize(length);
-        int topicLength = (int)input[VARIABLE_SIZE_POS];
+        //second byte parsed
+        counter++; // passing msb
+        counter++; // lsb of topic length
+        int topicLength = (int)input[counter];
         decodedMsg.setVariable_size(topicLength);
+        //fourth byte parsed
+        counter++;
         StringBuilder sBuilder = new StringBuilder();
         //topic size loop
         for(int i=0; i<topicLength; i++){
-            sBuilder.append((char)input[i+IDENTIFIER_SIZE*2]);
+            sBuilder.append((char)input[i+counter]);
         }
         decodedMsg.setVariable(sBuilder.toString());
+        //topic bytes parsed
+        counter += topicLength;
+        System.out.println("1: "+counter);
         sBuilder.setLength(0);
-        //message size loop
-        for(int i=0; i<=length-(topicLength+IDENTIFIER_SIZE); i++){
-            sBuilder.append((char)input[i+IDENTIFIER_SIZE*2+topicLength]);
+        //is package identifier exists
+        if(decodedMsg.getQos_level()!=0){
+            decodedMsg.setIdentifier(new byte[]{input[counter], input[1+counter]});
+            //identifier parsed
+            counter += IDENTIFIER_SIZE;
+            System.out.println(counter);
+            for(int i=counter; i<input.length; i++){
+                sBuilder.append((char)input[i]);
+            }
+        }else{
+            //message size loop
+            for(int i=counter; i<input.length; i++){
+                sBuilder.append((char)input[i]);
+            }
         }
         decodedMsg.setPayload(sBuilder.toString());
         return decodedMsg;

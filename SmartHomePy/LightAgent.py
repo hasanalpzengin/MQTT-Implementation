@@ -29,7 +29,7 @@ def on_log(client, userdata, level, log_msg):
 def startPublish(client):
     while(True):
         global status
-        infoLight = client.publish("house/light/1", status, qos=0)
+        infoLight = client.publish("house/light/1", status, qos=1)
         infoLight.wait_for_publish()
         time.sleep(5)
 
