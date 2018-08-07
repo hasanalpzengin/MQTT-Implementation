@@ -8,7 +8,7 @@ status = 0
 
 def on_connect(mqttc, userdata, flags, rc):
     print("Connected with Result Code: "+str(rc))
-    client.subscribe("house/light/1/change",0)
+    client.subscribe("light/change",0)
 
 def on_publish(userdata, mid):
     print("mid: "+str(mid))
@@ -29,7 +29,7 @@ def on_log(client, userdata, level, log_msg):
 def startPublish(client):
     while(True):
         global status
-        infoLight = client.publish("house/light/1", status, qos=1)
+        infoLight = client.publish("light", status, qos=1)
         infoLight.wait_for_publish()
         time.sleep(5)
 

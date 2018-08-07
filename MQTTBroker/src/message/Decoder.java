@@ -78,14 +78,12 @@ public class Decoder {
         decodedMsg.setVariable(sBuilder.toString());
         //topic bytes parsed
         counter += topicLength;
-        System.out.println("1: "+counter);
         sBuilder.setLength(0);
         //is package identifier exists
         if(decodedMsg.getQos_level()!=0){
             decodedMsg.setIdentifier(new byte[]{input[counter], input[1+counter]});
             //identifier parsed
             counter += IDENTIFIER_SIZE;
-            System.out.println(counter);
             for(int i=counter; i<input.length; i++){
                 sBuilder.append((char)input[i]);
             }
@@ -96,6 +94,9 @@ public class Decoder {
             }
         }
         decodedMsg.setPayload(sBuilder.toString());
+        
+        System.out.println("Pub Message Fetched: "+decodedMsg.getVariable()+" : "+decodedMsg.getPayload());
+        
         return decodedMsg;
     }
 
@@ -120,7 +121,6 @@ public class Decoder {
         decodedMsg.setFlags(new byte[]{packageIdentifier});
         StringBuilder sBuilder = new StringBuilder();
         //topic size loop
-        System.out.println("Size: "+topicLength);
         for(int i=0; i<topicLength; i++){
             sBuilder.append((char)input[i+(IDENTIFIER_SIZE*3)]);
         }
@@ -129,6 +129,7 @@ public class Decoder {
         //qos
         byte qos = input[length+IDENTIFIER_SIZE-1];
         decodedMsg.setQos_level(qos);
+        System.out.println("Sub Message Fetched: "+decodedMsg.getVariable()+" : "+decodedMsg.getPayload());
         return decodedMsg;
     }
     

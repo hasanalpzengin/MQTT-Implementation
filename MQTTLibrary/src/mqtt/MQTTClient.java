@@ -49,15 +49,15 @@ public class MQTTClient {
         return connection;
     }
     
-    public Publish publish(Connection connection,Message message, boolean isRepeat, int delay){
+    public Thread publish(Connection connection,Message message, boolean isRepeat, int delay){
         Publish publish = new Publish(connection);
         publish.setMessage(message.getMessage());
         publish.setTopic(message.getTopic());
         publish.setQos(message.getQos_level());
         publish.setRepeat(isRepeat);
         publish.setSecond(delay);
-        (new Thread(publish)).start();
-        return publish;
+        Thread thread = new Thread(publish);
+        return thread;
     }
     
     public Heart heart(Connection connection){

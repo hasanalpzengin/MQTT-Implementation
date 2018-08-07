@@ -5,21 +5,22 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class LightRecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+public class LightRecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
     private ImageView statusImage;
-    private TextView agentName;
+    private TextView topicText;
     private int position;
     private boolean status=false;
 
     public LightRecyclerViewHolder(View itemView) {
         super(itemView);
-        statusImage = itemView.findViewById(R.id.status);
-        agentName = itemView.findViewById(R.id.agentName);
+        statusImage = itemView.findViewById(R.id.statusImage);
+        topicText = itemView.findViewById(R.id.topicText);
         itemView.setOnClickListener(this);
     }
 
     public String getAgentName(){
-        return agentName.getText().toString();
+        return topicText.getText().toString();
     }
 
     public void setStatus(boolean status){
@@ -36,7 +37,7 @@ public class LightRecyclerViewHolder extends RecyclerView.ViewHolder implements 
     }
 
     public void setAgentName(String name){
-        agentName.setText(name);
+        topicText.setText(name);
     }
 
     public int getPos() {
@@ -49,6 +50,6 @@ public class LightRecyclerViewHolder extends RecyclerView.ViewHolder implements 
 
     @Override
     public void onClick(View v) {
-        LightFragment.setCurrent(position);
+        MainActivity.setCurrent(position);
     }
 }

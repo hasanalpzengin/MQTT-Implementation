@@ -1,9 +1,18 @@
 package com.example.hasalp.smarthome;
 
-public class LightAgent extends Agent {
+public class LightAgent {
+    private String topic;
     private boolean status;
 
-    public boolean getStatus() {
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+    public boolean isStatus() {
         return status;
     }
 

@@ -75,6 +75,7 @@ public class Decoder {
             }
         }
         decodedMsg.setMessage(sBuilder.toString());
+        System.out.println("Pub Message Fetched: "+decodedMsg.getTopic()+" : "+decodedMsg.getMessage());
         return decodedMsg;
     }
 

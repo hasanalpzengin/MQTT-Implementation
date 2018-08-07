@@ -26,7 +26,7 @@ import message.MessageBuilder;
 public class Publish extends Function implements Runnable {
     
     private byte[] publishMessage;
-    private String message = null, topic = null;
+    private static String message = null, topic = null;
     private int second = 10;
     private int qos = 0;
     private boolean repeat = true;
@@ -44,7 +44,7 @@ public class Publish extends Function implements Runnable {
             System.out.println("Null Message is not allowed");
             return;
         }
-        while(repeat){
+        while(true){
             try {
                 if(qos==0){
                     publishMessage = builder.buildPublish(message ,topic, qos);
@@ -77,8 +77,11 @@ public class Publish extends Function implements Runnable {
                     }
                 }
                 Thread.sleep(1000*second);
+                if(!repeat){
+                    return;
+                }
             } catch (IOException | InterruptedException ex) {
-                Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("Thread Killed");
                 return;
             }
         }

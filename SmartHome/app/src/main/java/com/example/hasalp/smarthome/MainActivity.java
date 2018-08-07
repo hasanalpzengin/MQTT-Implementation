@@ -1,154 +1,236 @@
 package com.example.hasalp.smarthome;
 
-import android.os.Bundle;
-import android.os.StrictMode;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
-import android.view.View;
-import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.speech.RecognizerIntent;
+import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
+import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import connection.Connection;
+import connection.Publish;
+import connection.Subscribe;
+import message.Message;
+import mqtt.MQTTClient;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity {
 
-    NavigationView navBar;
-    LightFragment lightFragment;
-    TemperatureFragment temperatureFragment;
-    public static final String IP = "tcp://10.42.0.1:1883";
-    ArrayList<Fragment> fragments;
-    FragmentTransaction fragmentTransaction;
-    private boolean connected = false;
+    private LinearLayoutManager layoutManager;
+    private RecyclerView lightRecyclerView;
+    private static ImageButton lightButton;
+    private FloatingActionButton voiceButton;
+    private RecyclerAdapter recyclerAdapter;
+    private MQTTClient client;
+    private Connection connection;
+    private static ArrayList<LightAgent> lightAgents;
+    private static final int SPEECH_CODE = 100;
+    private static int current = -1;
+
+    public static void setCurrent(int current) {
+        MainActivity.current = current;
+        if (lightAgents.get(current).isStatus()){
+            lightButton.setImageResource(R.drawable.light_on);
+        }else{
+            lightButton.setImageResource(R.drawable.light_off);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        //StrictMode.setThreadPolicy(policy);
+        init();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-
-        navBar = findViewById(R.id.nav_view);
-
-        setupConnection();
-
-        lightFragment = new LightFragment();
-        temperatureFragment = new TemperatureFragment();
-
-        fragments = new ArrayList<>();
-        fragments.add(lightFragment);
-        fragments.add(temperatureFragment);
-
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frameLayout, fragments.get(0));
-        fragmentTransaction.commit();
-    }
-
-    public void setupConnection(){
-
-        (new MqttTask(IP,"Hasan")).execute();
-
-        View header = navBar.getHeaderView(0);
-        TextView id = header.findViewById(R.id.idText);
-        final TextView status = header.findViewById(R.id.statusText);
-
-        if(Connection.isConnected()){
-            connected = true;
-            id.setText("Hasan");
-            status.setText("Connected");
-        }else{
-            Log.d("Error","Connection Error");
-            connected = false;
-            id.setText("Hasan");
-            status.setText("Disconnected");
-        }
-
-    }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (connected) {
-            if (id == R.id.nav_light) {
-                fragmentTransaction.replace(R.id.frameLayout, fragments.get(0));
-                fragmentTransaction.addToBackStack(null);
-                fragmentTransaction.commit();
-            } else if (id == R.id.nav_temperature) {
-                fragmentTransaction.replace(R.id.frameLayout, fragments.get(1));
-                fragmentTransaction.addToBackStack(null);
-                fragmentTransaction.commit();
-            } else if (id == R.id.nav_share) {
-
-            } else if (id == R.id.nav_send) {
-
+        client = new MQTTClient();
+        connection = client.connection("10.42.0.1","Hasan");
+        Subscribe subscribe = new Subscribe(connection, "light", 0) {
+            @Override
+            public void readHandle(Message message) {
+                //remove non numeric characters
+                String strMessage = message.getMessage();
+                strMessage = strMessage.replaceAll("[^\\d.]", "");
+                message.setMessage(strMessage);
+                //update input
+                if(strMessage.length()>0) {
+                    update(message);
+                }
             }
+        };
+        client.startSubscribe(subscribe);
+    }
+
+    private void update(Message message) {
+        int i=0;
+        for (LightAgent agent : lightAgents) {
+            if (agent.getTopic().equals(message.getTopic())) {
+                if((Integer.parseInt(message.getMessage().substring(0,1))==1) != agent.isStatus()) {
+                    changeStatus(i);
+                    return;
+                }else{
+                    //same type don't need to change
+                    return;
+                }
+            }
+            i++;
+        }
+        LightAgent lightAgent = new LightAgent();
+        lightAgent.setTopic(message.getTopic());
+        lightAgent.setStatus(Integer.parseInt(message.getMessage().substring(0,1))==1);
+        lightAgents.add(lightAgent);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                recyclerAdapter.notifyDataSetChanged();
+                //if new added agent is the first agent
+                if (lightAgents.size()==1){
+                    current = 0;
+                    if (lightAgents.get(current).isStatus()){
+                        lightButton.setImageResource(R.drawable.light_on);
+                    }else{
+                        lightButton.setImageResource(R.drawable.light_off);
+                    }
+                }
+            }
+        });
+    }
+
+    private void init() {
+        lightButton = findViewById(R.id.lightButton);
+        voiceButton = findViewById(R.id.voiceButton);
+        layoutManager = new LinearLayoutManager(getApplicationContext());
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        recyclerAdapter = new RecyclerAdapter();
+        lightRecyclerView = findViewById(R.id.lightRecyclerView);
+        lightRecyclerView.setLayoutManager(layoutManager);
+        lightRecyclerView.setHasFixedSize(true);
+        lightRecyclerView.setAdapter(recyclerAdapter);
+        lightAgents = new ArrayList<>();
+
+        voiceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                voiceCommand();
+            }
+        });
+
+        lightButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(current!=-1) {
+                    changeStatus(current);
+                    if (lightAgents.get(current).isStatus()) {
+                        lightButton.setImageResource(R.drawable.light_on);
+                    } else {
+                        lightButton.setImageResource(R.drawable.light_off);
+                    }
+                }
+            }
+        });
+    }
+
+    private void changeStatus(int pos){
+        if (current != -1) {
+            LightAgent selectedAgent = lightAgents.get(pos);
+            //change status
+            selectedAgent.setStatus(!selectedAgent.isStatus());
+            lightAgents.set(pos, selectedAgent);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    recyclerAdapter.notifyDataSetChanged();
+                }
+            });
+            publish(selectedAgent);
         }else{
-            Toast.makeText(getApplicationContext(), getString(R.string.closedConnection), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), getString(R.string.selectLight), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void voiceCommand() {
+        Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say 'Light ON' or 'Light OFF'");
+        try{
+            startActivityForResult(voiceIntent, SPEECH_CODE);
+        }catch(ActivityNotFoundException e){
+            Log.e("Speech Activity Error", e.getMessage());
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case SPEECH_CODE:{
+                if(resultCode == RESULT_OK && null != data){
+                    ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    if (result.get(0).equalsIgnoreCase("Light on")){
+                        LightAgent currentAgent = lightAgents.get(current);
+                        currentAgent.setStatus(true);
+                        lightAgents.set(current, currentAgent);
+                        publish(currentAgent);
+                        Log.d("Light Value", String.valueOf(1));
+                    }else if(result.get(0).equalsIgnoreCase("Light off")){
+                        LightAgent currentAgent = lightAgents.get(current);
+                        currentAgent.setStatus(false);
+                        lightAgents.set(current, currentAgent);
+                        publish(currentAgent);
+                        Log.d("Light Value", String.valueOf(0));
+                    }
+                }
+            }
+        }
+    }
+
+    public void publish(LightAgent lightAgent){
+        Message publishMessage = new Message();
+        String message = lightAgent.isStatus() ? "1" : "0";
+        publishMessage.setMessage(message);
+        publishMessage.setTopic(lightAgent.getTopic()+"/change");
+        publishMessage.setQos_level(0);
+
+        Thread publish = client.publish(connection, publishMessage, false, 0);
+        publish.start();
+    }
+
+    private class RecyclerAdapter extends RecyclerView.Adapter<LightRecyclerViewHolder>{
+
+        @NonNull
+        @Override
+        public LightRecyclerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            //inflate
+            LayoutInflater inflater = LayoutInflater.from(getApplicationContext());
+            View view = inflater.inflate(R.layout.light_card, parent, false);
+            return new LightRecyclerViewHolder(view);
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+        @Override
+        public void onBindViewHolder(@NonNull LightRecyclerViewHolder holder, int position) {
+            LightAgent lightAgent = lightAgents.get(position);
+
+            holder.setAgentName(lightAgent.getTopic());
+            holder.setStatus(lightAgent.isStatus());
+            holder.setPos(position);
+        }
+
+        @Override
+        public int getItemCount() {
+            return lightAgents.size();
+        }
     }
 }

@@ -37,9 +37,9 @@ public class ReadThread extends Thread {
     private static final int SUBSCRIBE_TYPE = 8;
     private static final int PUBLISH_SIZE_POS = 1;
     private static int tryCount = 0;
-    public String topic;
-    public int qos=0;
-    public boolean isSubscriber = true;
+    public String sub_topic, pub_topic;
+    public int sub_qos=0, pub_qos=0;
+    public boolean isSubscriber = false;
     
     public ReadThread(Socket socket){
         this.socket = socket;
@@ -62,9 +62,8 @@ public class ReadThread extends Thread {
                 Message message = Decoder.decode(data);
                 switch(message.getType()){
                     case PUBLISH_TYPE:{
-                        qos = message.getQos_level();
-                        topic = message.getVariable();
-                        isSubscriber = false;
+                        pub_qos = message.getQos_level();
+                        pub_topic = message.getVariable();
                         publish(data);
                         break;
                     }
@@ -77,8 +76,8 @@ public class ReadThread extends Thread {
                     }
                     case SUBSCRIBE_TYPE:{
                         //send suback back
-                        topic = message.getVariable();
-                        qos = message.getQos_level();
+                        sub_topic = message.getVariable();
+                        sub_qos = message.getQos_level();
                         isSubscriber = true;
                         byte identifier = message.getFlags()[0];
                         byte qos = message.getQos_level();
@@ -130,8 +129,8 @@ public class ReadThread extends Thread {
 
     private void publish(byte[] data) throws IOException {
         Message message = Decoder.decode(data);
-        topic = message.getVariable();
-        System.out.println("Topic: " + topic);
+        pub_topic = message.getVariable();
+        System.out.println("Topic: " + pub_topic);
         System.out.println("Message: " + message.getPayload());
         int size = message.getSize();
         byte[] publish = new byte[size+2];
@@ -143,13 +142,12 @@ public class ReadThread extends Thread {
             System.out.println(readThread.qos+" : "+this.qos);
             System.out.println(readThread.isSubscriber);
             */
-            if(readThread.isSubscriber && readThread.topic.equalsIgnoreCase(this.topic) && this.qos==readThread.qos){
+            if(readThread.isSubscriber && readThread.sub_topic.equalsIgnoreCase(this.pub_topic) && this.pub_qos==readThread.sub_qos){
                 System.out.println("Worked");
                 readThread.doutStream.write(publish);
                 readThread.doutStream.flush();
             }
         }
-        System.out.println(message.getQos_level());
         if(message.getQos_level()==0){
             //doutStream.write(new byte[]{0x01});
             System.out.println("Published");

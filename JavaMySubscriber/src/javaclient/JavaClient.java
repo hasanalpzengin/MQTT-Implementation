@@ -15,14 +15,12 @@ public class JavaClient {
         if(connection.isConnected()){
             
             //topic,qos
-            Subscribe subscribe = new Subscribe(connection ,"test",1) {
+            Subscribe subscribe = new Subscribe(connection ,"light",0) {
                 @Override
                 public void readHandle(Message message) {
                     System.out.println(message.getMessage());
                 }
             };
-            subscribe.setTopic("test");
-            subscribe.setQos(2);
             client.startSubscribe(subscribe);
         }
     }
