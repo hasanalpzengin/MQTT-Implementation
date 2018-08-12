@@ -21,22 +21,26 @@ import message.Message;
 import message.MessageBuilder;
 
 /**
- *
  * @author hasalp
+ * That thread is for managing client connections
  */
 public class Reader extends Thread {
-
+    //pass server socket from Connection class to handle new connections
     private ServerSocket server = null;
+    //threads arraylist is for storing client connections.
     public static ArrayList<ReadThread> threads;
+    //next client's (thread's) client id
     private int id = 0;
     
     public Reader(ServerSocket server){
+        //init variables
         this.server = server;
         threads = new ArrayList();
     }
     
     @Override
     public void run() {
+        //listen for new client connection forever.
         while(true){
             try {
                 //wait until new connection establish
@@ -46,12 +50,15 @@ public class Reader extends Thread {
             }
         }
     }
-
+    //after new connection recieved add new ReadThread
     private void addThread(Socket accept) {
+        //that thread listens the connection of client.
         ReadThread thread = new ReadThread(accept);
         thread.ID = id;
         id++;
+        //start thread
         thread.start();
+        //add created client (thread) to arraylist
         threads.add(thread);
     }
     

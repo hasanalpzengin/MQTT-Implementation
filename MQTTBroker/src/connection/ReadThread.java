@@ -20,9 +20,10 @@ import message.MessageBuilder;
 
 /**
  *
- * @author hasalp
+ * 
  */
 public class ReadThread extends Thread {
+    
     public Socket socket = null;
     private Reader reader = null;
     public int ID;
@@ -57,13 +58,16 @@ public class ReadThread extends Thread {
             while(true){
                 MessageBuilder builder = new MessageBuilder();
                 byte[] data = new byte[1024];
+                // read byte data
                 dinStream.read(data);
-                
+                //decode byte data
                 Message message = Decoder.decode(data);
                 switch(message.getType()){
                     case PUBLISH_TYPE:{
+                        // register client as publisher
                         pub_qos = message.getQos_level();
                         pub_topic = message.getVariable();
+                        // start process
                         publish(data);
                         break;
                     }
@@ -75,32 +79,37 @@ public class ReadThread extends Thread {
                         break;
                     }
                     case SUBSCRIBE_TYPE:{
-                        //send suback back
+                        // register client as subscriber
                         sub_topic = message.getVariable();
                         sub_qos = message.getQos_level();
+                        // for condition of is unsub message recieved
                         isSubscriber = true;
                         byte identifier = message.getFlags()[0];
                         byte qos = message.getQos_level();
+                        // build and send suback back
                         byte suback[] = builder.buildSuback(qos, identifier);
                         doutStream.write(suback);
                         System.out.println("Subscribed");
                         break;
                     }
                     case HEART_TYPE:{
-                        //send puback back and send heart to all subscribers
-                        //puback
+                        // send puback back and send heart to all subscribers
+                        // puback
                         byte puback[] = builder.buildPuback();
+                        // send puback to heart publisher
                         doutStream.write(puback);
-                        //heart
+                        // send heart msg to all clients which is connected to broker
                         for(ReadThread readThread : Reader.threads){
                             readThread.doutStream.write(builder.buildHeart());
                         }
                         break;
                     }
                     case DISCONNECT_TYPE:{
+                        //close thread
                         close();
                     }
                     default:{
+                        // close thread for unexpected msg
                         System.out.println("Unknown Command");
                         close();
                         return;
@@ -126,7 +135,7 @@ public class ReadThread extends Thread {
             Logger.getLogger(ReadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     private void publish(byte[] data) throws IOException {
         Message message = Decoder.decode(data);
         pub_topic = message.getVariable();
@@ -135,13 +144,8 @@ public class ReadThread extends Thread {
         int size = message.getSize();
         byte[] publish = new byte[size+2];
         System.arraycopy(data, 0, publish, 0, publish.length);
+        //send publish msg to all matched clients which is subscribed to same topic and same qos level
         for(ReadThread readThread : Reader.threads){
-            /*
-            System.out.println("-------------");
-            System.out.println(readThread.topic+" : "+this.topic);
-            System.out.println(readThread.qos+" : "+this.qos);
-            System.out.println(readThread.isSubscriber);
-            */
             if(readThread.isSubscriber && readThread.sub_topic.equalsIgnoreCase(this.pub_topic) && this.pub_qos==readThread.sub_qos){
                 System.out.println("Worked");
                 readThread.doutStream.write(publish);
@@ -149,7 +153,7 @@ public class ReadThread extends Thread {
             }
         }
         if(message.getQos_level()==0){
-            //doutStream.write(new byte[]{0x01});
+            
             System.out.println("Published");
         }else if(message.getQos_level()==1){
             MessageBuilder builder = new MessageBuilder();

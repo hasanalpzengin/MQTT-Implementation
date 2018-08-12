@@ -2,6 +2,10 @@
 package message;
 
 public class Decoder {
+    /**
+     * MOST USING BYTE POSSITIONING ON MQTT
+     * TYPE | MSG_SIZE | VAR_SIZE_MSB | VAR_SIZE_LSB | VARIABLE | .. | PAYLOAD_SIZE | PAYLOAD | ...
+    **/
     private static final int VARIABLE_SIZE_POS = 3;
     private static final int SUB_TOPIC_LENGTH_POS = 5;
     private static final int SIZE_POS = 1;
@@ -9,37 +13,45 @@ public class Decoder {
     private static final int PACKAGE_IDENTIFIER_POS = 3;
     private static final int PUB_TYPEQOS_POS = 0;
     
-    
+    /*
+        Decode function gets byte data and parses first byte to defining type of message
+        after defination associated function starts for keep decoding process
+    */
     public static Message decode(byte[] input){
         Message decodedMsg = null;
         int typeqos = (int)input[PUB_TYPEQOS_POS];
+        //first digit is for type
         int type = (int) Math.floor(typeqos/16);
+        //second digit is for qos
+        // 82 means subsribe with qos 1
         int qos = typeqos/2;
-        if(type == 3){
-            decodedMsg = publishDecode(input);
-        }else if(type == 15){
-            decodedMsg = heartDecode(input);
-        }else if(type == 1){
-            decodedMsg = connectDecode(input);
-        }else if(type == -7){
-            decodedMsg = subscribeDecode(input);
-        }else{
-            decodedMsg = new Message();
-            decodedMsg.setType(-1);
+        switch(type){
+            case 1: decodedMsg = connectDecode(input); break;
+            case 3: decodedMsg = publishDecode(input); break;
+            //-7 is equals to 8
+            case -7: decodedMsg = subscribeDecode(input); break;
+            case 15: decodedMsg = heartDecode(input); break;
+            default: decodedMsg = new Message(); decodedMsg.setType(-1); break;
         }
         return decodedMsg;
     }
     
     private static Message connectDecode(byte[] input){
         Message decodedMsg = new Message();
+        // type 1 is reserved for connect
         decodedMsg.setType(1);
+        // get msg length to parse
         int length = (int)input[SIZE_POS]; // remaining length
         decodedMsg.setSize(length);
+        // get variable length
+        // variable means protocol name in connect message
         int protocolLength = (int)input[VARIABLE_SIZE_POS];
         decodedMsg.setVariable_size(protocolLength);
+        //create string builder to store bytes of protocol name in one string
         StringBuilder sBuilder = new StringBuilder();
         //topic size loop
         for(int i=0; i<protocolLength; i++){
+            // before protocol byte we have 4 byte with represents type, msg size, protocol size msb, protocol size lsb
             sBuilder.append((char)input[i+IDENTIFIER_SIZE*2]);
         }
         decodedMsg.setVariable(sBuilder.toString());
@@ -55,6 +67,7 @@ public class Decoder {
     private static Message publishDecode(byte[] input){
         int counter = 0;
         Message decodedMsg = new Message();
+        //msg type 3 is reserved to publish message in mqtt
         decodedMsg.setType(3);
         //first byte type+qos
         int qosLevel = input[counter];
@@ -104,15 +117,15 @@ public class Decoder {
         Message decodedMsg = new Message();
         decodedMsg.setType(15);
         int length = (int) input[SIZE_POS];
-        //decodedMsg.setPayload("<3");
+        // don't have to do but it's cute
+        // decodedMsg.setPayload("<3");
         return decodedMsg;
     }
 
     private static Message subscribeDecode(byte[] input) {
         Message decodedMsg = new Message();
+        //msg type 8 is reserved for subscribe
         decodedMsg.setType(8);
-        //print byte
-        //System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(input));
         int length = (int)input[SIZE_POS]; // remaining length
         decodedMsg.setSize(length);
         byte packageIdentifier = input[PACKAGE_IDENTIFIER_POS];

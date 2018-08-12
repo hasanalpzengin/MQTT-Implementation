@@ -1,4 +1,4 @@
-#include "ESP8266WiFi.h"
+#include <ESP8266WiFi.h>
 #include "PubSubClient.h"
 //wifi
 const char* ssid = "nennee";
@@ -22,6 +22,7 @@ void reconnect() {
       Serial.println("connected");
       // ... and subscribe to topic
       client.subscribe("light/change");
+      Serial.println("Subscribed to light/change");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -32,10 +33,8 @@ void reconnect() {
   }
 }
 
-void setup(){
-  Serial.begin(9600);
-
-  delay(100);
+void wifi_setup(){
+  delay(10);
   WiFi.begin(ssid, password);
 
   Serial.print("Wifi Connecting.");
@@ -47,13 +46,18 @@ void setup(){
   randomSeed(micros());
 
   Serial.println("Wifi Connected");
+}
+
+void setup(){
+  pinMode(pin1, OUTPUT);
+  Serial.begin(9600);
+
+  wifi_setup();
 
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
-
-  pinMode(pin1, OUTPUT);
   //change state
-  if(currentState == "0"){
+  if(currentState[0] == '0'){
     //light on
     digitalWrite(pin1, LOW);
   }else{
@@ -73,14 +77,18 @@ void loop(){
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  currentState = (char*)payload;
-  Serial.println(currentState);
-  //change state
-  if(currentState == "0"){
-    //light on
-    digitalWrite(pin1, LOW);
+  if(strcmp(topic, "light/change")==0 && ((char)payload[0] == '0' || (char)payload[0] == '1')){
+    currentState[0] = (char)payload[0];
+    Serial.println(currentState);
+    //change state
+    if(currentState[0] == '0'){
+      //light on
+      digitalWrite(pin1, LOW);
+    }else{
+      //light off
+      digitalWrite(pin1, HIGH);
+    }
   }else{
-    //light off
-    digitalWrite(pin1, HIGH);
+    Serial.println("No Message");
   }
 }

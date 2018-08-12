@@ -25,7 +25,7 @@ public class LightRecyclerViewHolder extends RecyclerView.ViewHolder implements 
 
     public void setStatus(boolean status){
         this.status = status;
-        if (status){
+        if (!status){
             statusImage.setImageResource(R.drawable.light_on);
         }else{
             statusImage.setImageResource(R.drawable.light_off);

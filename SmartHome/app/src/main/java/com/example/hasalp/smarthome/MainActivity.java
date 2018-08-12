@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static void setCurrent(int current) {
         MainActivity.current = current;
-        if (lightAgents.get(current).isStatus()){
+        if (!lightAgents.get(current).isStatus()){
             lightButton.setImageResource(R.drawable.light_on);
         }else{
             lightButton.setImageResource(R.drawable.light_off);
@@ -55,7 +55,9 @@ public class MainActivity extends AppCompatActivity {
         init();
 
         client = new MQTTClient();
-        connection = client.connection("10.42.0.1","Hasan");
+        //wifi hotspot
+        //connection = client.connection("10.42.0.1","Hasan");
+        connection = client.connection("192.168.56.1", "Hasan");
         Subscribe subscribe = new Subscribe(connection, "light", 0) {
             @Override
             public void readHandle(Message message) {
@@ -97,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 //if new added agent is the first agent
                 if (lightAgents.size()==1){
                     current = 0;
-                    if (lightAgents.get(current).isStatus()){
+                    if (!lightAgents.get(current).isStatus()){
                         lightButton.setImageResource(R.drawable.light_on);
                     }else{
                         lightButton.setImageResource(R.drawable.light_off);
@@ -130,18 +132,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(current!=-1) {
-                    changeStatus(current);
-                    if (lightAgents.get(current).isStatus()) {
+                    LightAgent lightAgent = changeStatus(current);
+                    if (!lightAgents.get(current).isStatus()) {
                         lightButton.setImageResource(R.drawable.light_on);
                     } else {
                         lightButton.setImageResource(R.drawable.light_off);
                     }
+                    publish(lightAgent);
                 }
             }
         });
     }
 
-    private void changeStatus(int pos){
+    private LightAgent changeStatus(int pos){
         if (current != -1) {
             LightAgent selectedAgent = lightAgents.get(pos);
             //change status
@@ -153,16 +156,18 @@ public class MainActivity extends AppCompatActivity {
                     recyclerAdapter.notifyDataSetChanged();
                 }
             });
-            publish(selectedAgent);
+            return selectedAgent;
         }else{
             Toast.makeText(getApplicationContext(), getString(R.string.selectLight), Toast.LENGTH_LONG).show();
         }
+        return null;
     }
 
     private void voiceCommand() {
         Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, SPEECH_CODE);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say 'Light ON' or 'Light OFF'");
         try{
             startActivityForResult(voiceIntent, SPEECH_CODE);
@@ -193,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("Light Value", String.valueOf(0));
                     }
                 }
+                break;
             }
         }
     }
@@ -204,8 +210,8 @@ public class MainActivity extends AppCompatActivity {
         publishMessage.setTopic(lightAgent.getTopic()+"/change");
         publishMessage.setQos_level(0);
 
-        Thread publish = client.publish(connection, publishMessage, false, 0);
-        publish.start();
+        Thread publishThread = client.publish(connection, publishMessage, false, 0);
+        publishThread.start();
     }
 
     private class RecyclerAdapter extends RecyclerView.Adapter<LightRecyclerViewHolder>{

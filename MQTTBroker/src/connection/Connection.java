@@ -5,27 +5,24 @@
  */
 package connection;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import message.MessageBuilder;
 
 public class Connection {
-    private static InetAddress addr;
+    // 1883 is reserved MQTT port
     public static final int PORT = 1883;
+    // ServerSocket to create socket
     public static ServerSocket serverSocket;
+    // Boolean value to record connect status
     public static boolean connected = false;
     
+    //init function
     public ServerSocket createServer(int port){
         try {
+            //init server socket and start server
             serverSocket = new ServerSocket(port);
             return serverSocket;
         } catch (UnknownHostException ex) {
