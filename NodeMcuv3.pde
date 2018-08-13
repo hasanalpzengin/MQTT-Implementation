@@ -1,5 +1,5 @@
 #include <ESP8266WiFi.h>
-#include "PubSubClient.h"
+#include <PubSubClient.h>
 //wifi
 const char* ssid = "nennee";
 const char* password = "iovUr8rN";
@@ -7,88 +7,65 @@ const char* password = "iovUr8rN";
 const char* mqttServer = "10.42.0.1";
 const int mqttPort = 1883;
 char* currentState = "0";
+const char* topic = "light";
 const int pin1 = 5;
 
-WiFiClient net;
-PubSubClient client(net);
-
-unsigned long lastMillis = 0;
-
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect("ESP8266 Client")) {
-      Serial.println("connected");
-      // ... and subscribe to topic
-      client.subscribe("light/change");
-      Serial.println("Subscribed to light/change");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
-
-void wifi_setup(){
-  delay(10);
-  WiFi.begin(ssid, password);
-
-  Serial.print("Wifi Connecting.");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  randomSeed(micros());
-
-  Serial.println("Wifi Connected");
-}
+WiFiClient wifiClient;
+PubSubClient client(wifiClient);
 
 void setup(){
-  pinMode(pin1, OUTPUT);
   Serial.begin(9600);
+  WiFi.begin(ssid, password);
 
-  wifi_setup();
+  while(WiFi.status() != WL_CONNECTED){
+    delay(500);
+    Serial.print("Connecting to WiFi..");
+  }
+  Serial.println("Connected to the WiFi network");
 
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
+
+  while(!client.connected()){
+    Serial.println("Connecting to MQTT...");
+    if(client.connect("light1")){
+      Serial.println("Client Connected");
+    }else{
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000);
+    }
+  }
+  //gpio 5 - d1
+  pinMode(pin1, OUTPUT);
   //change state
-  if(currentState[0] == '0'){
+  if(currentState == "0"){
     //light on
     digitalWrite(pin1, LOW);
   }else{
     //light off
     digitalWrite(pin1, HIGH);
   }
+  char* subTopic;
+  sprintf(subTopic, "%s%s", topic,"/change");
+  client.subscribe(subTopic,0);
 }
 
 void loop(){
-    if (!client.connected()) {
-      reconnect();
-    }
-    client.loop();
-    delay(10);
-    client.publish("light",currentState);
-    delay(4000);
+  client.publish(topic, currentState);
+  delay(2000);
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  if(strcmp(topic, "light/change")==0 && ((char)payload[0] == '0' || (char)payload[0] == '1')){
-    currentState[0] = (char)payload[0];
-    Serial.println(currentState);
-    //change state
-    if(currentState[0] == '0'){
-      //light on
-      digitalWrite(pin1, LOW);
-    }else{
-      //light off
-      digitalWrite(pin1, HIGH);
-    }
+  Serial.print("Message: ");
+  currentState = (char*)payload[0];
+  Serial.println(currentState);
+  //change state
+  if(currentState == "0"){
+    //light on
+    digitalWrite(pin1, LOW);
   }else{
-    Serial.println("No Message");
+    //light off
+    digitalWrite(pin1, HIGH);
   }
 }

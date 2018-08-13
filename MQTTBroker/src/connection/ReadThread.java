@@ -152,22 +152,30 @@ public class ReadThread extends Thread {
                 readThread.doutStream.flush();
             }
         }
-        if(message.getQos_level()==0){
-            
-            System.out.println("Published");
-        }else if(message.getQos_level()==1){
-            MessageBuilder builder = new MessageBuilder();
-            doutStream.write(builder.buildPuback());
-            System.out.println("Published QOS1");
-        }else if(message.getQos_level()==2){
-            MessageBuilder builder = new MessageBuilder();
-            doutStream.write(builder.buildPubrec());//rec pub
-            byte[] pubrel = new byte[2];
-            dinStream.read(pubrel);//rel rec
-            if(Decoder.isPubrel(pubrel)){
-                doutStream.write(builder.buildPubcomp()); // comp pub
-            }
-            System.out.println("Published QOS2");
+        switch (message.getQos_level()) {
+            case 0:
+                System.out.println("Published");
+                break;
+            case 1:
+                {
+                    MessageBuilder builder = new MessageBuilder();
+                    doutStream.write(builder.buildPuback());
+                    System.out.println("Published QOS1");
+                    break;
+                }
+            case 2:
+                {
+                    MessageBuilder builder = new MessageBuilder();
+                    doutStream.write(builder.buildPubrec());//rec pub
+                    byte[] pubrel = new byte[2];
+                    dinStream.read(pubrel);//rel rec
+                    if(Decoder.isPubrel(pubrel)){
+                        doutStream.write(builder.buildPubcomp()); // comp pub
+                    }       System.out.println("Published QOS2");
+                    break;
+                }
+            default:
+                break;
         }
     }
     
