@@ -19,10 +19,18 @@ import message.Message;
 /**
  *
  * @author hasalp
+ * This class works like builder class.
+ * Creating an object with that class will be enough to use library.
+ * Steps to use library :
+ * 1. Create object from MQTTClient class
+ * 2. run connection method
+ * 3. run desired function
+ * 4. enjoy mqtt protocol
  */
 public class MQTTClient {
     private Connection connection = null;
     public Connection connection(String ip, String id){
+        //create connection
         Thread thread = new Thread(new Runnable(){
             @Override
             public void run() {
@@ -30,6 +38,7 @@ public class MQTTClient {
             }
         });
         thread.start();
+        //print connecting message if connection isn't established
         while(connection == null){
             try {
                 System.out.println("Connecting...");
@@ -48,8 +57,19 @@ public class MQTTClient {
         }
         return connection;
     }
-    
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    /**
+     *  to run publish function user should create a message to send
+     *  and give it to function as second parameter
+     *  repeat parameter can set the repeated message
+     *  delay is exist for repeated messages, it sets sending delay
+     **/
     public Thread publish(Connection connection,Message message, boolean isRepeat, int delay){
+        //set publish class to run it's thread
         Publish publish = new Publish(connection);
         publish.setMessage(message.getMessage());
         publish.setTopic(message.getTopic());

@@ -12,18 +12,18 @@ public class MessageBuilder {
     };
     
     private final byte[] pubackMessage = {
-        0x40,
-        0x02
+        0x40,//type
+        0x02//flag(success)
     };
     
     private final byte[] pubrecMessage = {
-        0x50,
-        0x02
+        0x50,//type
+        0x02//flag(success)
     };
     
     private final byte[] pubcompMessage = {
-        0x70,
-        0x02
+        0x70,//type
+        0x02//flag(success)
     };
    
     
@@ -37,7 +37,7 @@ public class MessageBuilder {
     };
     
     private final byte[] unsubMessage = {
-        -0x60,
+        -0x60,//type
         0x00, //remaining length
         0x00, //msb
         0x00, //lsb
@@ -45,31 +45,29 @@ public class MessageBuilder {
     };
     
     private final byte[] unsubackMessage = {
-        -0x50,
-        0x02
+        -0x50,//type
+        0x02//flag(success)
     };
     
     private final byte[] pingreqMessage = {
-        -0x40,
-        0x00
+        -0x40,//type
+        0x02//flag(success)
     };
     
     private final byte[] pingrespMessage = {
-        -0x30,
-        0x00
+        -0x30,//type
+        0x02//flag(success)
     };
         
     private final byte[] heartMessage = {
         -0x10, //F
-        0x00
+        0x00//flag(don't care)
     };
-
-    private final int LENGTH_POS = 1;
-    private final int CON_STR_LENGTH_POS = 13;
-    private final int PUB_TOPIC_LENGTH_POS = 3;
-    private final int SUB_TOPIC_LENGTH_POS = 5;
+    //  Subscribe acknowledge message's QOS byte's position
     private final int SUBACK_QOS_POS = 5;
+    //  Subscribe acknowledge message's identifier byte's position
     private final int SUBACK_IDENTIFIER_POS = 4;
+    //  connection acknowledge message's status byte's position
     private final int CONNACK_STATUS_POS = 3;
     
     public byte[] buildConnack(boolean success) throws UnsupportedEncodingException{

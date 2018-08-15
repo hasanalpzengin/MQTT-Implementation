@@ -14,22 +14,24 @@ public class Decoder {
         int typeqos = (int)input[PUB_TYPEQOS_POS];
         int type = (int) Math.floor(typeqos/16);
         int qos = typeqos/2;
-        if(type == 3){
-            decodedMsg = publishDecode(input);
-        }else if(type == 15){
-            decodedMsg = heartDecode(input);
-        }else{
-            decodedMsg = new Message();
-            decodedMsg.setType(-1);
+        switch (type) {
+            case 3:
+                decodedMsg = publishDecode(input);
+                break;
+            case 15:
+                decodedMsg = heartDecode(input);
+                break;
+            default:
+                decodedMsg = new Message();
+                decodedMsg.setType(-1);
+                break;
         }
         return decodedMsg;
     }
     
     public static boolean isPubAck(byte[] data){
-        if(data[0] == 0x40){
-            return true;
-        }
-        return false;
+        //msg type 4 is reserved for puback
+        return data[0] == 0x40;
     }
     
     private static Message publishDecode(byte[] input){
@@ -88,16 +90,12 @@ public class Decoder {
     }
 
     public static boolean isPubrec(byte[] data) {
-        if(data[0] == 0x50){
-            return true;
-        }
-        return false;
+        //msg type 5 reserved for pubrec
+        return data[0] == 0x50;
     }
     
     public static boolean isPubcomp(byte[] data){
-        if(data[0] == 0x70){
-            return true;
-        }
-        return false;
+        //msg type 7 reserved for pubcomp
+        return data[0] == 0x70;
     }
 }

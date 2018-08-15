@@ -108,26 +108,39 @@ public class MessageBuilder {
         -0x10, //F
         0x00
     };
-
+    //final variables
+    //generic possition for all messages
     public final int LENGTH_POS = 1;
-    public final int CON_STR_LENGTH_POS = 13;
+    //connection message length byte's position
+    public final int CON_LENGTH_POS = 13;
+    //publish message topic length byte's position
     public final int PUB_TOPIC_LENGTH_POS = 3;
+    //subscribe message length byte's position
     public final int SUB_TOPIC_LENGTH_POS = 5;
+    //subcribe message identifier byte's pos
     public final int SUB_IDENTIFIER_POS = 3;
+    //subscribe message topic identifier byte's pos
     public final int SUB_TOPIC_IDENTIFIER_SIZE = 2;
-    private static byte identifier = 1;
+    //publish message's qos byte's pos
     public final int PUB_QOS_POS = 0;
+    //this identifier will change its value after each message creation
+    private static byte identifier = 1;
     
     public byte[] buildConnect(String sid) throws UnsupportedEncodingException{
+        //encode string id to byte id
         byte[] id = Encoder.encode(sid);
+        //set a byte array which has enough size to fit variables as final msg
+        //ID + connectMSG
         byte[] mergedMessage = new byte[id.length+connectMessage.length];
+        //first put connect msg to final byte array
         System.arraycopy(connectMessage, 0, mergedMessage, 0, connectMessage.length);
+        //put id
         System.arraycopy(id, 0, mergedMessage, connectMessage.length, id.length);
-        
+        //get size of id to set length of message
         byte encodedLength = (byte)id.length;
         //length set
         mergedMessage[LENGTH_POS] += encodedLength;
-        mergedMessage[CON_STR_LENGTH_POS] = encodedLength;
+        mergedMessage[CON_LENGTH_POS] = encodedLength;
         
         return mergedMessage;
     }

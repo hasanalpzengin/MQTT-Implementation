@@ -18,6 +18,10 @@ import message.MessageBuilder;
 /**
  *
  * @author hasalp
+ * 
+ * This class extends Function class and implements Runnable
+ * Function class gains privileges to publish or recieve message
+ * Runnable used to run function as Thread
  */
 public class HeartRead extends Function implements Runnable {
     
@@ -31,10 +35,13 @@ public class HeartRead extends Function implements Runnable {
     @Override
     public void run() {
         try {
+            //create heart message for check condition
+            heartMessage = builder.buildHeart();
             while(true){
-                heartMessage = builder.buildHeart();
+                //recieve message
                 byte[] heart = new byte[2];
                 dinStream.read(heart);
+                //is heart
                 if(heart[0] == heartMessage[0]){
                     System.out.println("You got a heart");
                 }

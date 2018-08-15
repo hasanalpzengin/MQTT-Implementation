@@ -20,6 +20,7 @@ import message.MessageBuilder;
 public class Connection{
     private static InetAddress addr;
     public static final int PORT = 1883;
+    //client's socket, important to recieve and send message
     public Socket socket;
     private static MessageBuilder builder;
     private static boolean connected = false;
@@ -27,16 +28,21 @@ public class Connection{
     
     public Connection(String ip, String id){
         try {
+            //connect to broker's serversocket
             addr = InetAddress.getByName(ip);
             socket = new Socket(addr, PORT);
             socket.setKeepAlive(true);
-            //connection message
+            //create that object for connect message
             function = new Function(socket);
+            //connect message = 1
             byte[] connectMessage = function.builder.buildConnect(id);
             function.doutStream.write(connectMessage);
             function.doutStream.flush();
+            //read connack message
             byte[] respond = new byte[4];
             function.dinStream.read(respond);
+            //if connack has successfull byte
+            //0x20 for connack type 0x00 for success message
             if(respond[0] == 0x20 && respond[2] == 0x00) {
                 Connection.connected = true;
                 System.out.println("Connection Success");

@@ -147,9 +147,7 @@ public class Decoder {
     }
     
     public static boolean isPubrel(byte[] data){
-        if(data[0] == 0x60){
-            return true;
-        }
-        return false;
+        //0x60 is reserved for pubrel
+        return data[0] == 0x60;
     }
 }

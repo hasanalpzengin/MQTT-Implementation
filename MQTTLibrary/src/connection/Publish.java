@@ -22,6 +22,10 @@ import message.MessageBuilder;
 /**
  *
  * @author hasalp
+ * 
+ * This class extends Function class and implements Runnable
+ * Function class gains privileges to publish or recieve message
+ * Runnable used to run function as Thread
  */
 public class Publish extends Function implements Runnable {
     
@@ -32,6 +36,7 @@ public class Publish extends Function implements Runnable {
     private boolean repeat = true;
 
     public Publish(Connection connection) {
+        //init io objects
         super(connection.socket);
     }
 
@@ -45,30 +50,38 @@ public class Publish extends Function implements Runnable {
             return;
         }
         while(true){
+            //publish process is depends to qos type
             try {
+                //if qos 0 just publish message
                 if(qos==0){
                     publishMessage = builder.buildPublish(message ,topic, qos);
                     doutStream.write(publishMessage);
                     doutStream.flush();
                     System.out.println("Publish Success QoS0");
                 }else if(qos==1){
+                    //if qos 1 publish message and wait for puback msg
                     publishMessage = builder.buildPublish(message ,topic, qos);
                     doutStream.write(publishMessage);
                     doutStream.flush();
+                    //read puback
                     byte[] puback = new byte[2];
                     dinStream.read(puback);
                     if(Decoder.isPubAck(puback)){
                         System.out.println("Publish Success QoS1");
                     }
                 }else{
+                    //if qos 2 publish message, wait for pubrec message send pubrel message back and wait for pubcomp msg
                     publishMessage = builder.buildPublish(message ,topic, qos);
                     doutStream.write(publishMessage);
                     doutStream.flush();
+                    //read pubrec
                     byte[] pubrec = new byte[2];
                     dinStream.read(pubrec);
                     if(Decoder.isPubrec(pubrec)){
+                        //publish pubrel
                         doutStream.write(builder.buildPubrel());
                         doutStream.flush();
+                        //read pubcomp
                         byte[] pubcomp = new byte[2];
                         dinStream.read(pubcomp);
                         if(Decoder.isPubcomp(pubcomp)){

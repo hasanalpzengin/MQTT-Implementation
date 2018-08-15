@@ -15,6 +15,7 @@ import message.MessageBuilder;
  * @author hasalp
  */
 public class Function {
+    //IO objects
     OutputStream outStream;
     DataOutputStream doutStream;
     InputStream inStream;
@@ -23,10 +24,12 @@ public class Function {
     Socket socket;
 
     public Function(Socket socket) {
+        //get socket from Connection class
         this.socket = socket;
         initIO();
     }
     
+    //init io and message builder
     public void initIO(){
         try {
             outStream = socket.getOutputStream();

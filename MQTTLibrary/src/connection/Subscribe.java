@@ -17,6 +17,10 @@ import message.Message;
 /**
  *
  * @author hasalp
+ * 
+ * This class extends Function class and implements Runnable
+ * Function class gains privileges to publish or recieve message
+ * Runnable used to run function as Thread
  */
 public abstract class Subscribe extends Function implements Runnable {
 
@@ -25,16 +29,19 @@ public abstract class Subscribe extends Function implements Runnable {
     private int qos;
     
     public Subscribe(Connection connection ,String topic, int qos) {
+        //init IO objects
         super(connection.socket);
         //subscribe request
         try {
             this.qos = qos;
             this.topic = topic;
+            //create subscribe request message with desired topic and qos level
             subscribeMessage = builder.buildSubscribe(qos ,topic);
             (new Thread(new Runnable(){
                 @Override
                 public void run() {
                     try {
+                        //send subscribe request
                         doutStream.write(subscribeMessage);
                         doutStream.flush();
                     } catch (IOException ex) {
@@ -52,11 +59,16 @@ public abstract class Subscribe extends Function implements Runnable {
     public void run() {
         try{
             while(true){
+                //read message
                 byte[] data = new byte[1024];
                 dinStream.read(data);
+                //decode fetched message
                 Message message = Decoder.decode(data);
                 if(message!=null){
                     if(message.getMessage()!= null){
+                        /**
+                         * readHandle function have to overrided by user so parsed message can be usable by developer
+                        **/
                         readHandle(message);
                     }
                 }
@@ -82,7 +94,7 @@ public abstract class Subscribe extends Function implements Runnable {
     public void setQos(int qos) {
         this.qos = qos;
     }
-    
+    //abstract function has to be initiliazed when Subscribe object created.
     public abstract void readHandle(Message message);
     
 }

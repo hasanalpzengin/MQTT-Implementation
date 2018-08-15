@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package connection;
 
 import java.io.DataInputStream;
@@ -19,15 +14,30 @@ import message.MessageBuilder;
 /**
  *
  * @author hasalp
+ * 
+ * This class extends Function class and implements Runnable
+ * Function class gains privileges to publish or recieve message
+ * Runnable used to run function as Thread
  */
 public class Heart extends Function implements Runnable {
     
     private byte[] heartMessage;
     
     public Heart(Connection connection){
+        //super(socket) for init IO class
         super(connection.socket);
-        builder = new MessageBuilder();
+    }
+
+    @Override
+    public void run() {
         try {
+            //create heart message = F type
+            heartMessage = builder.buildHeart();
+            //sent heart message
+            doutStream.write(heartMessage);
+            doutStream.flush();
+            Thread.sleep(100);
+            //recieve puback
             byte[] puback = new byte[2];
             dinStream.read(puback);
             if(Decoder.isPubAck(puback)){
@@ -35,21 +45,6 @@ public class Heart extends Function implements Runnable {
             }else{
                 System.out.println("Sending Failed");
             }
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Unavailable Host Ip");
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @Override
-    public void run() {
-        try {
-            heartMessage = builder.buildHeart();
-            doutStream.write(heartMessage);
-            doutStream.flush();
-            Thread.sleep(1000);
         } catch (IOException | InterruptedException ex) {
             Logger.getLogger(Publish.class.getName()).log(Level.SEVERE, null, ex);
             return;

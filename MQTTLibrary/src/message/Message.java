@@ -9,6 +9,15 @@ public class Message {
     private byte[] identifier;
     private String message;
     private String topic;
+    
+    /**
+     * 
+     *  MSG_TYPE | MSG_LENGTH | VARIABLE_SIZE | VARIBLE_1 | ... | VARIABLE_N | IDENTIFIER | PAYLOAD_1 | ... | PAYLOAD_N
+     * 
+     * at client;
+     * variable means topic
+     * payload means message
+     */
 
     public byte[] getIdentifier() {
         return identifier;
