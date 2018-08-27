@@ -13,7 +13,6 @@ public class Decoder {
         Message decodedMsg = null;
         int typeqos = (int)input[PUB_TYPEQOS_POS];
         int type = (int) Math.floor(typeqos/16);
-        int qos = typeqos/2;
         switch (type) {
             case 3:
                 decodedMsg = publishDecode(input);

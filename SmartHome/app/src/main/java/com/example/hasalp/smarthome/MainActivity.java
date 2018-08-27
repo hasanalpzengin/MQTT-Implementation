@@ -74,6 +74,17 @@ public class MainActivity extends AppCompatActivity {
         client.startSubscribe(subscribe);
     }
 
+    public void publish(LightAgent lightAgent){
+        Message publishMessage = new Message();
+        String message = lightAgent.isStatus() ? "1" : "0";
+        publishMessage.setMessage(message);
+        publishMessage.setTopic(lightAgent.getTopic()+"/change");
+        publishMessage.setQos_level(0);
+
+        Thread publishThread = client.publish(connection, publishMessage, false, 0);
+        publishThread.start();
+    }
+
     private void update(Message message) {
         int i=0;
         for (LightAgent agent : lightAgents) {
@@ -201,17 +212,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
         }
-    }
-
-    public void publish(LightAgent lightAgent){
-        Message publishMessage = new Message();
-        String message = lightAgent.isStatus() ? "1" : "0";
-        publishMessage.setMessage(message);
-        publishMessage.setTopic(lightAgent.getTopic()+"/change");
-        publishMessage.setQos_level(0);
-
-        Thread publishThread = client.publish(connection, publishMessage, false, 0);
-        publishThread.start();
     }
 
     private class RecyclerAdapter extends RecyclerView.Adapter<LightRecyclerViewHolder>{

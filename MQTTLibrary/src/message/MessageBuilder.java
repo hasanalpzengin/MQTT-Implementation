@@ -151,6 +151,7 @@ public class MessageBuilder {
         byte[] topic = Encoder.encode(sTopic);
         byte encodedMessageLength;
         byte[] mergedMessage;
+        //qos 1 and qos 2 must include package identifier
         if(qos != 0){
             //package identifier
             byte[] packageIdentifier = new byte[2];
