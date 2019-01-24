@@ -41,6 +41,7 @@ public class ReadThread extends Thread {
     public String sub_topic, pub_topic;
     public int sub_qos=0, pub_qos=0;
     public boolean isSubscriber = false;
+    public boolean isConnected = false;
     
     public ReadThread(Socket socket){
         this.socket = socket;
@@ -65,10 +66,12 @@ public class ReadThread extends Thread {
                 switch(message.getType()){
                     case PUBLISH_TYPE:{
                         // register client as publisher
-                        pub_qos = message.getQos_level();
-                        pub_topic = message.getVariable();
-                        // start process
-                        publish(data);
+                        if(isConnected){
+                            pub_qos = message.getQos_level();
+                            pub_topic = message.getVariable();
+                            // start process
+                            publish(data);
+                        }
                         break;
                     }
                     case CONNECT_TYPE:{
@@ -76,20 +79,23 @@ public class ReadThread extends Thread {
                         byte connack[] = builder.buildConnack(true);
                         doutStream.write(connack);
                         System.out.println("Connected");
+                        isConnected = true;
                         break;
                     }
                     case SUBSCRIBE_TYPE:{
-                        // register client as subscriber
-                        sub_topic = message.getVariable();
-                        sub_qos = message.getQos_level();
-                        // for condition of is unsub message recieved
-                        isSubscriber = true;
-                        byte identifier = message.getFlags()[0];
-                        byte qos = message.getQos_level();
-                        // build and send suback back
-                        byte suback[] = builder.buildSuback(qos, identifier);
-                        doutStream.write(suback);
-                        System.out.println("Subscribed");
+                        if(isConnected){
+                            // register client as subscriber
+                            sub_topic = message.getVariable();
+                            sub_qos = message.getQos_level();
+                            // for condition of is unsub message recieved
+                            isSubscriber = true;
+                            byte identifier = message.getFlags()[0];
+                            byte qos = message.getQos_level();
+                            // build and send suback back
+                            byte suback[] = builder.buildSuback(qos, identifier);
+                            doutStream.write(suback);
+                            System.out.println("Subscribed");
+                        }
                         break;
                     }
                     case HEART_TYPE:{
@@ -146,7 +152,7 @@ public class ReadThread extends Thread {
         System.arraycopy(data, 0, publish, 0, publish.length);
         //send publish msg to all matched clients which is subscribed to same topic and same qos level
         for(ReadThread readThread : Reader.threads){
-            if(readThread.isSubscriber && readThread.sub_topic.equalsIgnoreCase(this.pub_topic) && this.pub_qos==readThread.sub_qos){
+            if(readThread.isSubscriber && readThread.sub_topic.equalsIgnoreCase(this.pub_topic) && this.pub_qos==readThread.sub_qos && readThread.ID != this.ID){
                 System.out.println("Worked");
                 readThread.doutStream.write(publish);
                 readThread.doutStream.flush();
